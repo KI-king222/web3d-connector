@@ -5,7 +5,7 @@ services:
     plan: starter
     healthCheckPath: /
     envVars:
-      - key: MCP_TOKEN
+      - key: DNxnIAFAyrHlLrqXtomrGeLRCx1KZxl6dy48lj7ANgA=
         generateValue: true
-      - key: GITHUB_TOKEN
+      - key: ghp_lcTOZLR71oBl4c0Ro2Mm4xkRbIHIR22B5f7T
         sync: false
