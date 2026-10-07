@@ -2,10 +2,10 @@ services:
   - type: web
     name: web3d-connector
     runtime: docker
-    plan: starter        # Chromium braucht mehr als 512 MB RAM
-    healthCheckPath: /
+    plan: free
     envVars:
       - key: MCP_TOKEN
-        generateValue: true
+        sync: false
       - key: GITHUB_TOKEN
         sync: false
+    healthCheckPath: /
