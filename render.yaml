@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: web3d-connector
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: MCP_TOKEN
+        generateValue: true
+      - key: GITHUB_TOKEN
+        sync: false
