@@ -217,7 +217,6 @@ const createMcp = () => {
       return out;
     };
     const files = await walk(dir);
-    // Get base tree SHA
     let baseSha;
     try {
       const ref = await ghApi(repo, `git/ref/heads/${branch}`);
@@ -276,8 +275,15 @@ app.use("/preview", express.static(ROOT, { extensions: ["html"], index: ["index.
 
 app.post("/mcp", async (req, res) => {
   if (!TOKEN) return res.status(500).json({ error: "MCP_TOKEN nicht gesetzt" });
+  // Auth: Authorization Bearer, x-api-key, or ?token= (for Grok Custom Connector without token field)
   const auth = req.headers.authorization || "";
-  if (auth !== `Bearer ${TOKEN}`) return res.status(401).json({ error: "Unauthorized" });
+  const hdrKey = req.headers["x-api-key"] || "";
+  const qTok = (req.query && (req.query.token || req.query.mcp_token)) || "";
+  const okAuth =
+    auth === `Bearer ${TOKEN}` ||
+    hdrKey === TOKEN ||
+    qTok === TOKEN;
+  if (!okAuth) return res.status(401).json({ error: "Unauthorized" });
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
   const server = createMcp();
   res.on("close", () => transport.close());
