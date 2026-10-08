@@ -15,7 +15,7 @@ document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x101018);
-scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture; // Spiegelungen auf Metall/Glas
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
 const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.05, 300);
 
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -37,7 +37,7 @@ let list = [];
 try { list = await (await fetch("entities.json")).json(); } catch (e) { console.warn("entities.json fehlt", e); }
 
 const group = new THREE.Group(); scene.add(group);
-let override = THEMES[q.get("theme")] ? q.get("theme") : null; // null = Variante je Objekt
+let override = THEMES[q.get("theme")] ? q.get("theme") : null;
 
 function build() {
   group.clear();
