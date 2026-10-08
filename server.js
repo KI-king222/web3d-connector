@@ -97,7 +97,7 @@ renderer.setAnimationLoop(() => {
 function buildServer() {
   const s = new McpServer({ name: "web3d-game-connector", version: "1.0.0" });
   s.tool("scaffold_game", "Legt ein neues Three.js-Webgame an.",
-    { project: z.string().regex(/^[\\w-]+$/), title: z.string().optional(), template: z.enum(["showcase", "game"]).default("showcase") },
+    { project: z.string().regex(/^[\w-]+$/), title: z.string().optional(), template: z.enum(["showcase", "game"]).default("showcase") },
     async ({ project, title, template }) => {
       const d = safe(project);
       await fs.mkdir(d, { recursive: true });
@@ -120,7 +120,7 @@ function buildServer() {
         }
       };
       await walk(safe(project));
-      return ok(out.join("\\n"));
+      return ok(out.join("\n"));
     });
   s.tool("read_file", "Liest eine Datei.", { path: z.string() }, async ({ path: p }) => ok(await fs.readFile(safe(p), "utf8")));
   s.tool("write_file", "Schreibt eine Datei.", { path: z.string(), content: z.string() },
@@ -150,7 +150,7 @@ function buildServer() {
       try { acorn.parse(await fs.readFile(safe(`${project}/${f}`), "utf8"), { ecmaVersion: "latest", sourceType: "module", locations: true }); }
       catch (e) { errs.push(`${f}: ${e.message}`); }
     }
-    return ok(errs.length ? errs.join("\\n") : "Keine Syntaxfehler.");
+    return ok(errs.length ? errs.join("\n") : "Keine Syntaxfehler.");
   });
   s.tool("add_pc_component", "PC-Komponente in entities.json.", {
     project: z.string(),
@@ -167,7 +167,7 @@ function buildServer() {
     return ok(`${e.kind} (${e.variant}) hinzugefuegt. Gesamt: ${list.length}.`);
   });
   s.tool("list_parts", "Katalog der PC-Bauteile.", {}, async () => ok("Siehe templates/components.js und README. Themes: stealth, white, rgb, retro."));
-  s.tool("remove_entity", "Entity entfernen.", { project: z.string().regex(/^[\\w-]+$/), index: z.number().int().min(0) },
+  s.tool("remove_entity", "Entity entfernen.", { project: z.string().regex(/^[\w-]+$/), index: z.number().int().min(0) },
     async ({ project, index }) => {
       const f = safe(`${project}/entities.json`);
       const list = JSON.parse(await fs.readFile(f, "utf8"));
@@ -177,7 +177,7 @@ function buildServer() {
       return ok(`Entfernt: ${gone.name || gone.kind || gone.type}.`);
     });
   s.tool("screenshot", "Headless Screenshot.", {
-    project: z.string().regex(/^[\\w-]+$/),
+    project: z.string().regex(/^[\w-]+$/),
     views: z.array(z.enum(["front", "side", "top", "iso"])).min(1).max(4).default(["iso"]),
     theme: z.enum(["stealth", "white", "rgb", "retro"]).optional(),
     width: z.number().min(320).max(1280).default(800),
@@ -199,7 +199,7 @@ function buildServer() {
       }
     } catch (e) { content.push({ type: "text", text: `Fehler: ${e.message}` }); }
     finally { await page.close(); }
-    if (logs.length) content.push({ type: "text", text: `Browser-Log:\\n${logs.slice(0, 20).join("\\n")}` });
+    if (logs.length) content.push({ type: "text", text: `Browser-Log:\n${logs.slice(0, 20).join("\n")}` });
     return { content };
   });
   return s;
