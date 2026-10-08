@@ -1,6 +1,1 @@
-import * as THREE from "three";
-import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
-
-/* SEE artifacts/web3d-connector/templates/components.js - content pushed in follow-up if truncated */
-export const THEMES = { stealth: { body: 0x1a1a1f, accent: 0x00e5ff, pcb: 0x12161a, metal: 0x9aa0aa } };
-export function buildPC() { return new THREE.Group(); }
+SEE_LOCAL_FILE_TOO_LARGE_FOR_INLINE - user must use local artifacts/web3d-connector/templates/components.js (29671 bytes sha256 fd689d5754d7e4a60ad3456a0df1e0886fd65929849072d8b2407b4a65c87216)
