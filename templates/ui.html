@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Web3D Studio</title>
+<style>
+:root{--bg:#0d0d12;--card:#17171f;--card2:#1f1f2a;--line:#2a2a38;--fg:#f2f2f6;--mut:#9494a8;--acc:#00c2ff;--ok:#38d98a;--bad:#ff7a90}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.4 system-ui,-apple-system,sans-serif;padding:env(safe-area-inset-top) 0 calc(76px + env(safe-area-inset-bottom))}
+header{position:sticky;top:0;z-index:5;background:#0d0d12ee;backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:10px 14px;display:flex;align-items:center;gap:10px}
+header h1{font-size:18px;margin:0;flex:1}
+.pill{font-size:12px;padding:4px 10px;border-radius:99px;background:var(--card2);color:var(--mut);white-space:nowrap}
+.pill.ok{color:var(--ok)}.pill.bad{color:var(--bad)}
+main{max-width:1100px;margin:0 auto;padding:12px 14px}
+h2{font-size:15px;margin:0 0 10px;color:var(--mut);font-weight:600;letter-spacing:.02em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin:0 0 14px}
+label{display:block;color:var(--mut);font-size:13px;margin:10px 0 4px}
+input,select,textarea,button{font:inherit;color:var(--fg);background:#101018;border:1px solid var(--line);border-radius:11px;padding:11px;width:100%}
+textarea{min-height:70px;font-family:ui-monospace,Menlo,monospace;font-size:13px}
+button{background:var(--acc);color:#001018;border:0;font-weight:600;cursor:pointer;width:auto}
+button.sec{background:var(--card2);color:var(--fg)}button.bad{background:#3a1f29;color:var(--bad)}button.sm{padding:7px 12px;font-size:14px}
+button:disabled,.busy{opacity:.55;pointer-events:none}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row>*{flex:1 1 auto}.row>button{flex:0 0 auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.proj{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.proj.cur{border-color:var(--acc)}
+.thumb{aspect-ratio:4/3;background:linear-gradient(135deg,#1b1b26,#12121a);display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:34px;cursor:pointer}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.pbody{padding:12px;display:flex;flex-direction:column;gap:6px;flex:1}
+.pname{font-weight:700;word-break:break-all}.meta{color:var(--mut);font-size:13px}
+.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:6px}
+.newcard{border-style:dashed;padding:14px;justify-content:center}
+iframe{width:100%;height:56vh;min-height:300px;border:1px solid var(--line);border-radius:14px;background:#000;display:block}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 0}.chips button{padding:7px 12px;font-size:14px}
+.part,.file{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px;word-break:break-all}
+.file{cursor:pointer}.file:active{background:var(--card2)}
+pre{white-space:pre-wrap;word-break:break-word;background:#101018;border-radius:10px;padding:10px;font-size:13px;margin:6px 0}
+.err{color:var(--bad)}.hide{display:none!important}.empty{color:var(--mut);padding:20px;text-align:center}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:6;background:#12121aee;backdrop-filter:blur(12px);border-top:1px solid var(--line);display:flex;padding:6px 8px calc(6px + env(safe-area-inset-bottom));gap:6px}
+nav button{flex:1;background:transparent;color:var(--mut);padding:9px 4px;font-size:13px;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:2px}
+nav button span{font-size:20px;line-height:1}nav button.on{background:var(--card2);color:var(--fg)}
+#sheet{position:fixed;left:8px;right:8px;bottom:calc(72px + env(safe-area-inset-bottom));z-index:7;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px;max-height:50vh;overflow:auto;box-shadow:0 10px 40px #000a}
+#sheet img{width:100%;border-radius:10px;margin:6px 0}
+#editor{position:fixed;inset:0;z-index:9;background:var(--bg);padding:calc(12px + env(safe-area-inset-top)) 12px 12px;display:flex;flex-direction:column;gap:8px}
+#editor textarea{flex:1;min-height:0}
+</style></head><body>
+
+<div id="login" class="card hide" style="margin:40px 14px">
+  <h2>Anmelden</h2>
+  <label>MCP_TOKEN (aus Render → Environment)</label>
+  <input id="tok" type="password" autocomplete="off" autocapitalize="off">
+  <div class="row" style="margin-top:10px"><button id="loginBtn">Anmelden</button></div>
+  <pre id="loginErr" class="err"></pre>
+</div>
+
+<div id="app" class="hide">
+<header><h1>Web3D Studio</h1><span id="pill" class="pill">…</span><button class="sec sm" id="refresh">↻</button></header>
+<main>
+
+<section id="tab-projects">
+  <h2 id="projTitle">PROJEKTE</h2>
+  <div id="grid" class="grid"></div>
+</section>
+
+<section id="tab-build" class="hide">
+  <div class="card">
+    <div class="row"><select id="cur"></select><button class="sec sm" id="reload">Neu laden</button><button class="sec sm" id="full">Vollbild</button><button class="sm" id="snap">📷 Foto</button></div>
+    <div style="height:10px"></div>
+    <iframe id="prev"></iframe>
+    <div class="chips" id="ctl"></div>
+  </div>
+  <div class="card">
+    <h2>BAUTEIL HINZUFÜGEN</h2>
+    <div class="row">
+      <div><label>Teil</label><select id="kind">
+        <option value="system">Kompletter PC</option><option value="case">Gehäuse</option><option value="motherboard">Mainboard</option>
+        <option value="cpu">CPU</option><option value="cooler">Luftkühler</option><option value="aio">Wasserkühlung</option>
+        <option value="ram">RAM</option><option value="gpu">Grafikkarte</option><option value="ssd_sata">SATA-SSD</option>
+        <option value="ssd_m2">M.2-SSD</option><option value="hdd">HDD</option><option value="psu">Netzteil</option><option value="fan">Lüfter</option>
+      </select></div>
+      <div><label>Design</label><select id="variant"><option>stealth</option><option>white</option><option>rgb</option><option>retro</option></select></div>
+    </div>
+    <div class="row"><div><label>Farbe</label><input id="accent" type="color" value="#00e5ff"></div><div><label>Farbe nutzen?</label><select id="useAccent"><option value="0">Theme-Farbe</option><option value="1">Eigene Farbe</option></select></div></div>
+    <label>Optionen (JSON, optional), z. B. {"preset":"flagship"}</label>
+    <textarea id="opts" placeholder="{}"></textarea>
+    <div class="row" style="margin-top:10px"><button id="add">Hinzufügen</button><button class="sec" id="catalog">Katalog</button></div>
+    <p class="meta" style="margin:8px 0 0">Die Anordnung übernimmt der Viewer automatisch in Reihen.</p>
+  </div>
+  <div class="card"><h2>TEILE IM PROJEKT</h2><div id="parts"></div></div>
+  <div class="card"><h2>DATEIEN</h2><div id="files"></div></div>
+</section>
+
+<section id="tab-github" class="hide">
+  <div class="card">
+    <h2>PROJEKTE AUS GITHUB HOLEN</h2>
+    <label>Repo (owner/name)</label><input id="repo" autocapitalize="off" placeholder="benji/mein-spiel">
+    <div class="row"><div><label>Branch</label><input id="branch" value="main"></div><div><label>Ordner (optional)</label><input id="under" autocapitalize="off" placeholder="leer = ganzes Repo"></div></div>
+    <div class="row" style="margin-top:10px"><button id="gList">Projekte im Repo suchen</button></div>
+    <div id="gResult"></div>
+  </div>
+  <div class="card">
+    <h2>AKTUELLES PROJEKT NACH GITHUB</h2>
+    <p class="meta" id="pushFor" style="margin:0"></p>
+    <div class="row"><div><label>Unterordner</label><input id="subdir" value="pc-designs" autocapitalize="off"></div><div><label>Nur Dateien (Komma)</label><input id="only" placeholder="components.js,entities.json" autocapitalize="off"></div></div>
+    <div class="row" style="margin-top:10px"><button id="push">Push → GitHub</button></div>
+  </div>
+  <div class="card">
+    <h2>AUTOMATISCHE SICHERUNG</h2>
+    <div id="state" class="meta"></div>
+    <div class="row" style="margin-top:10px"><button class="sec" id="backup">Jetzt alles sichern</button><button class="sec" id="restore">Aus Sicherung holen</button></div>
+  </div>
+  <button class="sec" id="logout" style="width:100%">Abmelden</button>
+</section>
+
+</main>
+<div id="sheet" class="hide"><div class="row" style="margin-bottom:6px"><b>Ergebnis</b><button class="sec sm" id="sheetClose" style="margin-left:auto">Schließen</button></div><div id="out"></div></div>
+<nav>
+  <button id="nav-projects" class="on"><span>🗂</span>Projekte</button>
+  <button id="nav-build"><span>🛠</span>Bauen</button>
+  <button id="nav-github"><span>☁️</span>GitHub</button>
+</nav>
+</div>
+
+<div id="editor" class="hide">
+  <div class="row"><b id="edName" style="word-break:break-all"></b><button class="sec sm" id="edClose" style="margin-left:auto">Schließen</button><button class="sm" id="edSave">Speichern</button></div>
+  <textarea id="edText" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); kids.flat().forEach((k) => e.append(k)); return e; };
+let token = localStorage.getItem("w3d_tok") || "", projects = [], cur = localStorage.getItem("w3d_cur") || "", curMtime = 0, timer, lastSig = "";
+
+async function api(path, body) {
+  const r = await fetch(path, { method: body ? "POST" : "GET", headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+  if (r.status === 401) { showLogin("Token falsch."); throw new Error("401"); }
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || r.status);
+  return j;
+}
+const tool = (name, args) => api("/api/tool", { name, args });
+const txt = (res) => (res.content || []).filter((c) => c.type === "text").map((c) => c.text).join("\n");
+
+function show(res) {
+  const out = $("#out"); out.innerHTML = "";
+  for (const c of res.content || []) {
+    if (c.type === "text") out.append(el("pre", { textContent: c.text, className: res.isError ? "err" : "" }));
+    else if (c.type === "image") out.append(el("img", { src: `data:${c.mimeType};base64,${c.data}` }));
+  }
+  $("#sheet").classList.remove("hide");
+}
+async function run(btn, fn) {
+  btn.classList.add("busy");
+  try { const r = await fn(); if (r) show(r); } catch (e) { if (e.message !== "401") show({ isError: true, content: [{ type: "text", text: e.message }] }); }
+  btn.classList.remove("busy");
+}
+const ago = (ms) => { if (!ms) return "–"; const s = (Date.now() - ms) / 1000; return s < 60 ? "gerade eben" : s < 3600 ? `vor ${Math.round(s / 60)} Min` : s < 86400 ? `vor ${Math.round(s / 3600)} Std` : `vor ${Math.round(s / 86400)} Tagen`; };
+const kb = (b) => (b < 1024 ? b + " B" : (b / 1024).toFixed(1) + " KB");
+
+/* ---------- Anmeldung & Tabs ---------- */
+function showLogin(msg) { $("#app").classList.add("hide"); $("#login").classList.remove("hide"); $("#loginErr").textContent = msg || ""; clearInterval(timer); }
+async function start() {
+  try {
+    await loadProjects();
+    $("#login").classList.add("hide"); $("#app").classList.remove("hide");
+    tab(localStorage.getItem("w3d_tab") || "projects");
+    clearInterval(timer); timer = setInterval(() => { if (!document.hidden) loadProjects(); }, 15000);
+    loadStatus();
+  } catch (e) { if (e.message !== "401") showLogin(e.message); }
+}
+function tab(n) {
+  for (const t of ["projects", "build", "github"]) { $("#tab-" + t).classList.toggle("hide", t !== n); $("#nav-" + t).classList.toggle("on", t === n); }
+  localStorage.setItem("w3d_tab", n); $("#sheet").classList.add("hide");
+  if (n === "build") openBuild(); if (n === "github") { loadStatus(); $("#pushFor").textContent = cur ? `Projekt: ${cur}` : "Kein Projekt gewählt."; }
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden && token) loadProjects(); });
+
+/* ---------- Projekte ---------- */
+async function loadProjects() {
+  const j = await api("/api/projects"); projects = j.projects;
+  if (!projects.some((p) => p.name === cur)) cur = projects[0]?.name || "";
+  const sig = JSON.stringify(projects) + cur;
+  if (sig !== lastSig) { lastSig = sig; renderProjects(); }
+  if (!$("#tab-build").classList.contains("hide")) fillSelect();
+}
+function thumbOf(name) { try { return JSON.parse(localStorage.getItem("th:" + name) || "null"); } catch { return null; } }
+function renderProjects() {
+  const keepName = $("#newName")?.value || "";
+  $("#projTitle").textContent = `PROJEKTE (${projects.length})`;
+  const g = $("#grid"); g.innerHTML = "";
+  const nc = el("div", { className: "proj newcard" },
+    el("div", { className: "pname", textContent: "＋ Neues Projekt" }),
+    el("input", { id: "newName", placeholder: "Name (a-z, 0-9, -, _)", autocapitalize: "off" }),
+    el("div", { className: "actions" }, el("button", { textContent: "Anlegen", onclick: (e) => run(e.target, async () => { const r = await tool("scaffold_game", { project: $("#newName").value.trim(), template: "showcase" }); cur = $("#newName").value.trim(); await loadProjects(); return r; }) })));
+  g.append(nc); nc.querySelector("input").value = keepName;
+  if (!projects.length) g.append(el("div", { className: "empty", textContent: "Noch keine Projekte. Lege eins an oder hole Projekte im Tab GitHub." }));
+  for (const p of projects) {
+    const th = thumbOf(p.name);
+    const thumb = el("div", { className: "thumb", onclick: () => { cur = p.name; localStorage.setItem("w3d_cur", cur); tab("build"); } }, th?.img ? el("img", { src: th.img }) : "🖥");
+    g.append(el("div", { className: "proj" + (p.name === cur ? " cur" : "") }, thumb,
+      el("div", { className: "pbody" },
+        el("div", { className: "pname", textContent: p.name }),
+        el("div", { className: "meta", textContent: `${p.parts} Teile · ${p.files} Dateien · ${kb(p.bytes)}` }),
+        el("div", { className: "meta", textContent: "geändert " + ago(p.mtime) }),
+        el("div", { className: "actions" },
+          el("button", { className: "sm", textContent: "Öffnen", onclick: () => { cur = p.name; localStorage.setItem("w3d_cur", cur); tab("build"); } }),
+          el("a", { href: `/preview/${p.name}/`, target: "_blank", style: "text-decoration:none" }, el("button", { className: "sec sm", textContent: "Vollbild" })),
+          el("button", { className: "bad sm", textContent: "Löschen", onclick: (e) => { if (confirm(`Projekt '${p.name}' wirklich löschen?`)) run(e.target, async () => { const r = await tool("delete_project", { project: p.name }); if (cur === p.name) cur = ""; await loadProjects(); return r; }); } })))));
+  }
+}
+
+/* ---------- Bauen ---------- */
+function fillSelect() {
+  const sel = $("#cur"); sel.innerHTML = projects.map((p) => `<option value="${p.name}">${p.name}</option>`).join("");
+  if (cur) sel.value = cur;
+}
+let shownProj = "";
+function openBuild() {
+  fillSelect();
+  if (!cur) { $("#prev").src = "about:blank"; $("#parts").innerHTML = "<div class='empty'>Erst ein Projekt anlegen.</div>"; return; }
+  if (shownProj !== cur) { shownProj = cur; $("#prev").src = `/preview/${cur}/`; }
+  const p = projects.find((x) => x.name === cur); curMtime = p?.mtime || 0;
+  renderParts(); $("#files").innerHTML = ""; loadFiles();
+}
+const ctl = () => { try { return $("#prev").contentWindow.__ctl; } catch { return null; } };
+$("#cur").onchange = () => { cur = $("#cur").value; localStorage.setItem("w3d_cur", cur); shownProj = ""; openBuild(); };
+$("#reload").onclick = () => { $("#prev").src = `/preview/${cur}/?t=${Date.now()}`; };
+$("#full").onclick = () => window.open(`/preview/${cur}/`, "_blank");
+$("#prev").onload = () => setTimeout(captureThumb, 1800);
+const shrink = (src) => new Promise((ok) => { const i = new Image(); i.onload = () => { const c = document.createElement("canvas"); c.width = 320; c.height = Math.round((320 * i.height) / i.width); c.getContext("2d").drawImage(i, 0, 0, c.width, c.height); ok(c.toDataURL("image/jpeg", 0.7)); }; i.src = src; });
+async function captureThumb() {
+  try {
+    const w = $("#prev").contentWindow; if (!w || !w.__snap || !cur) return;
+    const img = await shrink(w.__snap());
+    localStorage.setItem("th:" + cur, JSON.stringify({ m: curMtime, img })); renderProjects();
+  } catch {}
+}
+$("#snap").onclick = (e) => run(e.target, async () => {
+  const w = $("#prev").contentWindow; if (!w?.__snap) throw new Error("Vorschau noch nicht geladen.");
+  const data = w.__snap();
+  $("#out").innerHTML = ""; $("#out").append(el("pre", { textContent: "Bild gedrückt halten → „Zum Fotos-Album hinzufügen“ oder „Sichern“." }), el("img", { src: data }), el("a", { href: data, download: `${cur}.jpg`, textContent: "Als Datei laden" }));
+  $("#sheet").classList.remove("hide"); return null;
+});
+const chips = $("#ctl");
+for (const [label, fn] of [["Original", () => ctl()?.theme(null)], ["stealth", () => ctl()?.theme("stealth")], ["white", () => ctl()?.theme("white")], ["rgb", () => ctl()?.theme("rgb")], ["retro", () => ctl()?.theme("retro")], ["Reihe / Frei", () => ctl()?.layout()], ["Drehen", () => ctl()?.rotate()], ["Front", () => ctl()?.view("front")], ["Seite", () => ctl()?.view("side")], ["Oben", () => ctl()?.view("top")], ["Iso", () => ctl()?.view("iso")]])
+  chips.append(el("button", { className: "sec", textContent: label, onclick: fn }));
+
+async function renderParts() {
+  const box = $("#parts"); box.innerHTML = "";
+  try {
+    const { entities } = await api("/api/entities?project=" + encodeURIComponent(cur));
+    if (!entities.length) box.append(el("div", { className: "empty", textContent: "Noch keine Teile." }));
+    entities.forEach((en, i) => box.append(el("div", { className: "part" },
+      el("span", { textContent: `${i + 1}. ${en.name || en.kind || en.type} (${en.variant || "-"})` }),
+      el("button", { className: "bad sm", textContent: "Löschen", onclick: async () => { await tool("remove_entity", { project: cur, index: i }); await loadProjects(); renderParts(); $("#reload").click(); } }))));
+  } catch (e) { box.append(el("div", { className: "empty", textContent: "Keine entities.json in diesem Projekt." })); }
+}
+$("#add").onclick = (e) => run(e.target, async () => {
+  let options; const raw = $("#opts").value.trim();
+  if (raw) { try { options = JSON.parse(raw); } catch { throw new Error("Optionen sind kein gültiges JSON."); } }
+  const args = { project: cur, kind: $("#kind").value, variant: $("#variant").value, position: [0, 0, 0] };
+  if ($("#useAccent").value === "1") args.accent = $("#accent").value;
+  if (options) args.options = options;
+  const res = await tool("add_pc_component", args);
+  await loadProjects(); renderParts(); $("#reload").click(); return res;
+});
+$("#catalog").onclick = (e) => run(e.target, () => tool("list_parts", {}));
+
+async function loadFiles() {
+  const box = $("#files"); box.innerHTML = "";
+  try {
+    const res = await tool("list_files", { project: cur });
+    txt(res).split("\n").filter(Boolean).forEach((f) => box.append(el("div", { className: "file", onclick: () => openFile(f) }, el("span", { textContent: f.replace(cur + "/", "") }), el("span", { textContent: "✎", className: "meta" }))));
+  } catch {}
+}
+let edPath = "";
+async function openFile(p) {
+  const res = await tool("read_file", { path: p }); edPath = p;
+  $("#edName").textContent = p; $("#edText").value = txt(res); $("#editor").classList.remove("hide");
+}
+$("#edClose").onclick = () => $("#editor").classList.add("hide");
+$("#edSave").onclick = (e) => run(e.target, async () => { const r = await tool("write_file", { path: edPath, content: $("#edText").value }); await loadProjects(); return r; });
+
+/* ---------- GitHub ---------- */
+const repoVal = () => { const v = $("#repo").value.trim(); localStorage.setItem("w3d_repo", v); return v; };
+$("#gList").onclick = (e) => run(e.target, async () => {
+  const res = await tool("github_list", { repo: repoVal(), branch: $("#branch").value.trim() || "main", under: $("#under").value.trim() });
+  if (res.isError) return res;
+  const list = JSON.parse(txt(res)), box = $("#gResult"); box.innerHTML = "";
+  if (!list.length) box.append(el("div", { className: "empty", textContent: "Keine Projekte (Ordner mit index.html) gefunden." }));
+  for (const f of list) box.append(el("div", { className: "part" },
+    el("span", { textContent: `${f.name}  ·  ${f.path || "(Wurzel)"}` }),
+    el("button", { className: "sm", textContent: "Laden", onclick: (ev) => run(ev.target, async () => { const r = await tool("github_pull", { project: f.name, repo: repoVal(), branch: $("#branch").value.trim() || "main", subdir: f.path }); await loadProjects(); return r; }) })));
+  return null;
+});
+$("#push").onclick = (e) => run(e.target, () => {
+  const a = { project: cur, repo: repoVal(), branch: $("#branch").value.trim() || "main", subdir: $("#subdir").value.trim() };
+  const only = $("#only").value.split(",").map((s) => s.trim()).filter(Boolean); if (only.length) a.only = only;
+  return tool("github_push", a);
+});
+async function loadStatus() {
+  try {
+    const s = await api("/api/status"), pill = $("#pill"), box = $("#state");
+    pill.className = "pill " + (s.stateOn ? (s.lastError ? "bad" : "ok") : "");
+    pill.textContent = !s.stateOn ? "Sicherung aus" : s.restoring ? "stellt wieder her…" : s.lastError ? "Sicherung: Fehler" : s.lastBackup ? "gesichert " + ago(Date.parse(s.lastBackup)) : "Sicherung bereit";
+    box.innerHTML = "";
+    if (!s.githubToken) box.append(el("pre", { className: "err", textContent: "GITHUB_TOKEN fehlt auf dem Server." }));
+    if (!s.stateOn) box.append(el("pre", { textContent: "Aus. Setze bei Render die Variable STATE_REPO (z. B. benji/web3d-projekte). Dann wird jedes Projekt automatisch dorthin gesichert und nach einem Neustart zurückgeholt." }));
+    else box.append(el("pre", { textContent: `Repo: ${s.stateRepo}\nOffen: ${s.pending} · Wiederhergestellt beim Start: ${s.restored}${s.lastError ? "\nFehler: " + s.lastError : ""}` }));
+  } catch {}
+}
+$("#backup").onclick = (e) => run(e.target, async () => { const r = await api("/api/backup", {}); await loadStatus(); return { content: [{ type: "text", text: `${r.projects} Projekte gesichert.${r.error ? "\nFehler: " + r.error : ""}` }] }; });
+$("#restore").onclick = (e) => run(e.target, async () => { const r = await api("/api/restore", { force: false }); await loadProjects(); await loadStatus(); return { content: [{ type: "text", text: `${r.restored} Projekte wiederhergestellt.${r.error ? "\nFehler: " + r.error : ""}` }] }; });
+
+/* ---------- Verdrahtung ---------- */
+$("#loginBtn").onclick = () => { token = $("#tok").value.trim(); localStorage.setItem("w3d_tok", token); start(); };
+$("#logout").onclick = () => { localStorage.removeItem("w3d_tok"); token = ""; showLogin(""); };
+$("#refresh").onclick = async () => { await loadProjects(); loadStatus(); };
+$("#sheetClose").onclick = () => $("#sheet").classList.add("hide");
+for (const t of ["projects", "build", "github"]) $("#nav-" + t).onclick = () => tab(t);
+$("#repo").value = localStorage.getItem("w3d_repo") || "";
+if (token) start(); else showLogin("");
+</script>
+</body></html>
