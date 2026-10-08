@@ -110,3 +110,12 @@ renderer.setAnimationLoop(() => {
   controls.update();
   renderer.render(scene, camera);
 });
+
+// Schnittstelle fuer die Weboberflaeche (gleiche Domain): Foto im eigenen Browser, Steuerung ohne Server-Chromium
+window.__snap = () => { renderer.render(scene, camera); return renderer.domElement.toDataURL("image/jpeg", 0.85); };
+window.__ctl = {
+  layout: () => { layout = layout === "row" ? "free" : "row"; build(); frame("iso"); return layout; },
+  rotate: () => (controls.autoRotate = !controls.autoRotate),
+  theme: (n) => { override = THEMES[n] ? n : null; build(); },
+  view: (v) => frame(v),
+};
