@@ -202,6 +202,61 @@ function buildServer() {
     if (logs.length) content.push({ type: "text", text: `Browser-Log:\n${logs.slice(0, 20).join("\n")}` });
     return { content };
   });
+  s.tool("github_push", "Committet und pusht alle Dateien eines Projekts in EINEM Commit nach GitHub (Repo muss existieren und mind. einen Commit haben).",
+    {
+      project: z.string(),
+      repo: z.string().regex(/^[\w.-]+\/[\w.-]+$/).describe("owner/name"),
+      branch: z.string().default("main"),
+      message: z.string().default("Update via Grok"),
+      subdir: z.string().regex(/^[\w\-./]*$/).default("").describe("Zielordner im Repo, z.B. pc-designs. Leer = Repo-Wurzel"),
+      only: z.array(z.string()).optional().describe("Nur diese Dateien pushen"),
+    },
+    async ({ project, repo, branch, message, subdir, only }) => {
+      if (subdir.includes("..")) return { isError: true, content: [{ type: "text", text: "subdir ungueltig" }] };
+      const prefix = subdir ? subdir.replace(/^\/+|\/+$/g, "") + "/" : "";
+      if (!process.env.GITHUB_TOKEN) return { isError: true, content: [{ type: "text", text: "GITHUB_TOKEN fehlt auf dem Server." }] };
+      const gh = (u, m, b) => ghApi(repo, u, m, b);
+      const root = safe(project), files = [];
+      const walk = async (dir) => {
+        for (const e of await fs.readdir(dir, { withFileTypes: true })) {
+          const p = path.join(dir, e.name);
+          if (e.isDirectory()) await walk(p);
+          else files.push({ path: prefix + path.relative(root, p).split(path.sep).join("/"), mode: "100644", type: "blob", content: await fs.readFile(p, "utf8") });
+        }
+      };
+      await walk(root);
+      if (only) for (let i = files.length - 1; i >= 0; i--) if (!only.includes(files[i].path.slice(prefix.length))) files.splice(i, 1);
+      if (!files.length) return { isError: true, content: [{ type: "text", text: "Keine Dateien zum Pushen gefunden." }] };
+      try {
+        const ref = await gh(`git/ref/heads/${branch}`);
+        const parent = await gh(`git/commits/${ref.object.sha}`);
+        const tree = await gh("git/trees", "POST", { base_tree: parent.tree.sha, tree: files });
+        const commit = await gh("git/commits", "POST", { message, tree: tree.sha, parents: [ref.object.sha] });
+        await gh(`git/refs/heads/${branch}`, "PATCH", { sha: commit.sha });
+        return ok(`${files.length} Dateien gepusht: https://github.com/${repo}/commit/${commit.sha}`);
+      } catch (e) {
+        return { isError: true, content: [{ type: "text", text: String(e.message) }] };
+      }
+    });
+  s.tool("github_pull", "Laedt ein Projekt aus GitHub in den Workspace.",
+    { project: z.string().regex(/^[\w-]+$/), repo: z.string().regex(/^[\w.-]+\/[\w.-]+$/), branch: z.string().default("main"), subdir: z.string().regex(/^[\w\-./]*$/).default("") },
+    async ({ project, repo, branch, subdir }) => {
+      const prefix = subdir ? subdir.replace(/^\/+|\/+$/g, "") + "/" : "";
+      try {
+        const t = await ghApi(repo, `git/trees/${branch}?recursive=1`);
+        let n = 0;
+        for (const f of t.tree.filter((x) => x.type === "blob" && x.size < 1_000_000 && x.path.startsWith(prefix))) {
+          const b = await ghApi(repo, `git/blobs/${f.sha}`);
+          const dest = safe(`${project}/${f.path.slice(prefix.length)}`);
+          await fs.mkdir(path.dirname(dest), { recursive: true });
+          await fs.writeFile(dest, Buffer.from(b.content, "base64"));
+          n++;
+        }
+        return ok(`${n} Dateien nach ${project}/ geladen.`);
+      } catch (e) {
+        return { isError: true, content: [{ type: "text", text: String(e.message) }] };
+      }
+    });
   return s;
 }
 
@@ -259,4 +314,4 @@ app.post("/mcp", (req, res) => (tokenOk(req) ? mcp(req, res) : res.sendStatus(40
 app.post("/mcp/:token", (req, res) => (tokenOk(req) ? mcp(req, res) : res.sendStatus(401)));
 app.get(["/mcp", "/mcp/:token"], (_, res) => res.status(405).json({ jsonrpc: "2.0", error: { code: -32000, message: "Method not allowed" }, id: null }));
 
-app.listen(PORT, () => console.log(`MCP: http://localhost:${PORT}/mcp | Vorschau: /preview/<projekt>/`));
+app.listen(PORT, "0.0.0.0", () => console.log(`MCP: http://0.0.0.0:${PORT}/mcp | Vorschau: /preview/<projekt>/`));
