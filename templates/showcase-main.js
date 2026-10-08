@@ -15,11 +15,11 @@ document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x101018);
-scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture; // Spiegelungen auf Metall/Glas
 const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.05, 300);
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.autoRotate = !shot; controls.autoRotateSpeed = 1.2; controls.enableDamping = true;
+controls.autoRotate = q.get("rotate") === "1"; controls.autoRotateSpeed = 1.2; controls.enableDamping = true;
 
 scene.add(new THREE.HemisphereLight(0xffffff, 0x222233, 0.35));
 const key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(8, 14, 8); key.castShadow = !shot;
@@ -37,20 +37,38 @@ let list = [];
 try { list = await (await fetch("entities.json")).json(); } catch (e) { console.warn("entities.json fehlt", e); }
 
 const group = new THREE.Group(); scene.add(group);
-let override = THEMES[q.get("theme")] ? q.get("theme") : null;
+let override = THEMES[q.get("theme")] ? q.get("theme") : null; // null = Variante je Objekt
+
+let layout = q.get("layout") === "free" ? "free" : "row"; // row = ordentlich in Reihen, free = Positionen aus entities.json
+const GAP = 0.6, MAXW = 14;                               // Abstand und maximale Reihenbreite (Einheiten)
 
 function build() {
-  group.clear();
+  group.clear(); group.position.set(0, 0, 0);
+  const items = [];
   for (const e of list) {
     const m = e.type === "pc"
       ? buildPC(e.kind, override || e.variant, e.accent, e.options)
       : new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: e.color || "#999" }));
-    m.position.set(...e.position);
     if (e.scale) m.scale.set(...e.scale);
     if (e.rotationY) m.rotation.y = e.rotationY;
     m.name = e.name || e.kind || e.type;
-    group.add(m);
+    items.push({ m, e });
   }
+  if (layout === "row") {
+    let x = 0, z = 0, rowD = 0, maxX = 0;
+    for (const { m } of items) {
+      m.position.set(0, 0, 0); m.updateMatrixWorld(true);
+      const bb = new THREE.Box3().setFromObject(m), sz = bb.getSize(new THREE.Vector3());
+      if (x > 0 && x + sz.x > MAXW) { z += rowD + GAP; x = 0; rowD = 0; }  // neue Reihe
+      m.position.set(x - bb.min.x, -bb.min.y, z - bb.min.z);                // alle stehen auf dem Boden
+      x += sz.x + GAP; rowD = Math.max(rowD, sz.z); maxX = Math.max(maxX, x - GAP);
+      group.add(m);
+    }
+    group.position.set(-maxX / 2, 0, -(z + rowD) / 2);
+  } else {
+    for (const { m, e } of items) { m.position.set(...(e.position || [0, 0, 0])); group.add(m); }
+  }
+  group.updateMatrixWorld(true);
   floor.position.y = new THREE.Box3().setFromObject(group).min.y - 0.02;
 }
 
@@ -72,6 +90,12 @@ for (const name of [null, ...Object.keys(THEMES)]) {
   b.textContent = name || "Original";
   b.onclick = () => { override = name; build(); };
   bar.appendChild(b);
+}
+for (const [txt, fn] of [
+  ["Reihe / Frei", () => { layout = layout === "row" ? "free" : "row"; build(); frame("iso"); }],
+  ["Drehen an/aus", () => { controls.autoRotate = !controls.autoRotate; }],
+]) {
+  const b = document.createElement("button"); b.textContent = txt; b.onclick = fn; bar.appendChild(b);
 }
 
 addEventListener("resize", () => {
