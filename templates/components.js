@@ -220,7 +220,14 @@ const P = {
 
 /* ---------- Bauteile ---------- */
 const B = {
-  fan(t, o = {}) { const g = new THREE.Group(), f = fan(o.size ?? 120, t, 8, o.blades ?? 9); f.position.y = 12.5; g.add(f); return g; },
+  fan(t, o = {}) {
+    const tier = Math.max(1, Math.min(10, Number(o.tier || 6)));
+    const size = o.size ?? (80 + tier * 6), blades = o.blades ?? (5 + Math.floor(tier / 2));
+    const g = new THREE.Group(), f = fan(size, t, 5 + tier * 0.5, blades);
+    f.position.y = 12.5; g.add(f);
+    if (tier >= 7) g.add(bx(size * 0.72, 1.2, 2, glow(t.accent, 1.2), 0, 26, size / 2 - 4));
+    return g;
+  },
 
   cpu(t, o = {}) {
     const tier = Number(o.tier || (String(o.preset || "").match(/t?(\d+)/) || [0, 6])[1]);
@@ -253,7 +260,8 @@ const B = {
   },
 
   cooler(t, o = {}) {
-    const c = { height: 160, fins: 36, fans: 2, ...(P.cooler[o.preset] || {}), ...o };
+    const tier = Math.max(1, Math.min(10, Number(o.tier || 6)));
+    const c = { height: 55 + tier * 11, fins: 16 + tier * 3, fans: tier >= 8 ? 2 : 1, ...(P.cooler[o.preset] || {}), ...o };
     const h = c.height, g = new THREE.Group();
     const cu = mat(0xb87333, { metalness: 0.9, roughness: 0.3 }), al = mat(0xc8ccd4, { metalness: 0.85, roughness: 0.35 });
     const y0 = 12, hf = h - y0 - 8;
@@ -266,7 +274,7 @@ const B = {
     for (let i = 0; i < c.fans; i++) { // Luefter-Achse = x (Luftstrom hinten -> vorne)
       const f = fan(fs, t, 8, 9); f.rotation.z = Math.PI / 2; f.position.set(i === 0 ? 38 : -38, y0 + hf / 2, 0); g.add(f);
     }
-    if (c.detail !== false) { const l = flatLabel("NOVA CHILL", 46, 10, { color: hex6(t.accent), opacity: 0.95 }); l.position.set(0, h - 3.9, 0); g.add(l); }
+    if (c.detail !== false) { const l = flatLabel(`NOVA CHILL T${tier}`, 46, 10, { color: hex6(t.accent), opacity: 0.95 }); l.position.set(0, h - 3.9, 0); g.add(l); }
     return g;
   },
 
@@ -283,20 +291,22 @@ const B = {
   },
 
   ram(t, o = {}) {
-    const n = o.sticks ?? 2, pitch = o.pitch ?? 17, g = new THREE.Group();
+    const tier = Math.max(1, Math.min(10, Number(o.tier || 6))), n = o.sticks ?? (tier >= 6 ? 2 : 1), pitch = o.pitch ?? (tier >= 8 ? 14 : 17), g = new THREE.Group();
+    const length = 104 + tier * 4, height = 22 + tier * 1.2;
     for (let i = 0; i < n; i++) {
       const s = new THREE.Group(); s.position.z = (i - (n - 1) / 2) * pitch;
-      s.add(bx(133, 31, 1.6, mat(t.pcb), 0, 15.5, 0));
-      s.add(rb(131, 29, 3, mat(t.body, { metalness: 0.6 }), 1.5, 0, 16, 2.4), rb(131, 29, 3, mat(t.body, { metalness: 0.6 }), 1.5, 0, 16, -2.4));
-      s.add(rb(124, 5, 7.4, glow(t.accent, 1.1), 1.5, 0, 33, 0));
-      s.add(bx(130, 3, 1.7, gold(), 0, 1.5, 0));
+      s.add(bx(length, height, 1.6, mat(t.pcb), 0, height / 2, 0));
+      s.add(rb(length - 2, height - 2, 3, mat(t.body, { metalness: 0.35 + tier * 0.04 }), 1.5, 0, height / 2 + 1, 2.4), rb(length - 2, height - 2, 3, mat(t.body, { metalness: 0.35 + tier * 0.04 }), 1.5, 0, height / 2 + 1, -2.4));
+      s.add(rb(length - 9, 5, 7.4, glow(t.accent, 0.8 + tier * 0.08), 1.5, 0, height + 9, 0));
+      s.add(bx(length - 3, 3, 1.7, gold(), 0, 1.5, 0));
       g.add(s);
     }
     return g;
   },
 
   motherboard(t, o = {}) {
-    const m = mbLayout(o.form), { L, W } = m, top = 1.6, g = new THREE.Group();
+    const tier = Math.max(1, Math.min(10, Number(o.tier || 6))), m = mbLayout(o.form), { L, W } = m, top = 1.6, g = new THREE.Group();
+    g.scale.setScalar(0.92 + tier * 0.012);
     const body = mat(t.body, { metalness: 0.45, roughness: 0.5 });
     const pcb = mat(t.pcb, { metalness: 0.18, roughness: 0.62 });
     const alu = mat(0xa8acb4, { metalness: 0.75, roughness: 0.4 });
@@ -323,7 +333,7 @@ const B = {
       g.add(bx(len, th, 7.2, dark(), m.pcie[0] - 50 + len / 2, top + th / 2, m.pcie[1] + dz));
       g.add(bx(len - 6, 1, 5, mat(0x1a2030), m.pcie[0] - 50 + len / 2, top + th + 0.4, m.pcie[1] + dz));
     });
-    g.add(rb(78, 5, 22, body, 1.2, sx + 10, top + 4, -W * 0.08));
+    g.add(rb(54 + tier * 3, 5 + tier * 0.2, 22, body, 1.2, sx + 10, top + 4, -W * 0.08));
     g.add(bx(70, 0.8, 16, alu, sx + 10, top + 6.8, -W * 0.08));
     g.add(rb(20, 16, 78, body, 2, sx - 50, top + 9, sz + 5));
     g.add(rb(78, 14, 18, body, 2, sx, top + 8, W / 2 - 28));
@@ -336,6 +346,7 @@ const B = {
     for (let i = 0; i < 4; i++) g.add(bx(12, 6, 5, dark(), L / 2 - 20, top + 4, -W * 0.05 - i * 12));
     [[-L/2+8,-W/2+8],[L/2-8,-W/2+8],[-L/2+8,W/2-8],[L/2-8,W/2-8]].forEach(([x,z]) =>
       g.add(cy(2.2, 1.2, mat(t.metal, { metalness: 0.9 }), x, top + 0.6, z, 16)));
+    if (tier >= 7) g.add(bx(28, 1.8, 16, glow(t.accent, 0.8), sx - 34, top + 8, sz - 38));
     if (o.detail !== false) boardDetail(g, t, m);
     return g;
   },
@@ -420,22 +431,24 @@ const B = {
     return g;
   },
 
-  ssd_sata(t) {
+  ssd_sata(t, o = {}) {
+    const tier = Math.max(1, Math.min(10, Number(o.tier || 6)));
     const g = new THREE.Group();
-    g.add(rb(100, 7, 69.85, mat(t.metal, { metalness: 0.9, roughness: 0.3 }), 1.5, 0, 3.5, 0));
-    g.add(bx(80, 0.3, 50, mat(t.body), 0, 7.1, 0));
-    g.add(bx(60, 0.35, 3, glow(t.accent), 0, 7.2, 14));
+    g.add(rb(100, 7 + tier * 0.25, 69.85, mat(t.metal, { metalness: 0.75 + tier * 0.02, roughness: 0.3 }), 1.5, 0, 3.5, 0));
+    g.add(bx(80, 0.3, 50, mat(t.body), 0, 7.1 + tier * 0.25, 0));
+    g.add(bx(60 + tier * 2, 0.35, 3, glow(t.accent), 0, 7.2 + tier * 0.25, 14));
     g.add(bx(6, 2.4, 17, dark(), 52, 3.5, -22), bx(6, 2.4, 40, dark(), 52, 3.5, 12));
     return g;
   },
 
   ssd_m2(t, o = {}) {
+    const tier = Math.max(1, Math.min(10, Number(o.tier || 6)));
     const g = new THREE.Group();
-    g.add(bx(80, 0.9, 22, mat(t.pcb), 0, 0.45, 0));
+    g.add(bx(62 + tier * 3, 0.9, 22, mat(t.pcb), 0, 0.45, 0));
     for (let i = 0; i < 4; i++) g.add(bx(i === 0 ? 12 : 14, 1.1, i === 0 ? 12 : 14, dark(), -22 + i * 15, 1.4, 0));
     g.add(bx(7, 0.9, 18, gold(), -36.5, 0.45, 0));
-    if (o.heatsink ?? true) {
-      g.add(rb(68, 8, 21, mat(t.body, { metalness: 0.6 }), 1.5, 4, 5.4, 0));
+    if (o.heatsink ?? tier >= 3) {
+      g.add(rb(50 + tier * 3, 6 + tier * 0.35, 21, mat(t.body, { metalness: 0.4 + tier * 0.05 }), 1.5, 4, 5.4, 0));
       g.add(bx(50, 0.5, 2, glow(t.accent), 4, 9.5, 0));
     }
     return g;
@@ -451,7 +464,8 @@ const B = {
   },
 
   psu(t, o = {}) {
-    const d = o.form === "sfx" ? { w: 125, h: 63.5, l: 100 } : { w: 150, h: 86, l: 160 };
+    const tier = Math.max(1, Math.min(10, Number(o.tier || 6)));
+    const d = o.form === "sfx" ? { w: 125, h: 63.5, l: 100 } : { w: 150, h: 76 + tier, l: 145 + tier * 2 };
     const { w, h, l } = d, down = o.fan === "down", s = down ? -1 : 1, g = new THREE.Group();
     const body = mat(t.body, { metalness: 0.5, roughness: 0.5 });
     const shellY = down ? 6 + (h - 6) / 2 : (h - 6) / 2, rimY = down ? 3 : h - 3, faceY = down ? 0 : h;
@@ -460,13 +474,15 @@ const B = {
           rb(12, 6, l - 24, body, 1.5, w / 2 - 6, rimY, 0), rb(12, 6, l - 24, body, 1.5, -w / 2 + 6, rimY, 0));
     const f = fan(Math.min(w, l) - 28, t, 5, 9); f.scale.y = 0.25; f.position.y = faceY - s * 3; g.add(f);
     g.add(bx(w * 0.5, h * 0.5, 1, dark(), 0, h / 2, -l / 2 - 0.3));
-    for (let r = 0; r < 2; r++) for (let c = 0; c < 5; c++) g.add(bx(14, 7, 2, dark(), (c - 2) * 22, h * (0.28 + 0.42 * r), l / 2 + 0.5));
+    for (let r = 0; r < (tier >= 6 ? 3 : 2); r++) for (let c = 0; c < 4 + Math.floor(tier / 4); c++) g.add(bx(12, 7, 2, dark(), (c - 2) * 20, h * (0.22 + 0.28 * r), l / 2 + 0.5));
     g.add(bx(0.6, 1.2, l * 0.6, glow(t.accent), w / 2 + 0.2, h / 2, 0));
     return g;
   },
 
   case(t, o = {}) {
-    const { W, H, D, trayX } = caseDims(o.size), g = new THREE.Group();
+    const tier = Math.max(1, Math.min(10, Number(o.tier || 6)));
+    const size = o.size || (tier <= 3 ? "mini" : tier >= 8 ? "full" : "mid");
+    const { W, H, D, trayX } = caseDims(size), g = new THREE.Group();
     const body = mat(t.body, { metalness: 0.5, roughness: 0.55 });
     g.add(rb(W, 3, D, body, 1, 0, -H / 2 + 1.5, 0), rb(W, 3, D, body, 1, 0, H / 2 - 1.5, 0));
     g.add(bx(W, H, 3, body, 0, 0, -D / 2 + 1.5), bx(3, H, D, body, W / 2 - 1.5, 0, 0));
@@ -475,7 +491,7 @@ const B = {
     g.add(bx(W, 100, 4, body, 0, -H / 2 + 50, D / 2 - 2), bx(W, 20, 4, body, 0, H / 2 - 10, D / 2 - 2),
           bx(30, H, 4, body, -W / 2 + 15, 0, D / 2 - 2), bx(14, H, 4, body, W / 2 - 7, 0, D / 2 - 2)); // Frontrahmen
     g.add(bx(1.2, H - 60, 1.2, glow(t.accent), W / 2 - 7, 0, D / 2 + 0.4));
-    const nf = o.size === "mini" ? 2 : 3;
+    const nf = size === "mini" ? (tier >= 3 ? 2 : 1) : tier >= 7 ? 3 : 2;
     for (let i = 0; i < nf; i++) {                                                                    // Front-Luefter
       const f = fan(120, t, 6, 9); f.rotation.x = Math.PI / 2; f.position.set(8, 40 + (i - (nf - 1) / 2) * 120, D / 2 - 17); g.add(f);
     }

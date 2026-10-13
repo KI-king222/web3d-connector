@@ -1,0 +1,102 @@
+[
+  {
+    "type": "pc",
+    "kind": "ssd_sata",
+    "variant": "retro",
+    "options": {
+      "tier": 1,
+      "detail": true
+    },
+    "name": "SATA V2 Tier 1 / Preisstufe 1"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_sata",
+    "variant": "retro",
+    "options": {
+      "tier": 2,
+      "detail": true
+    },
+    "name": "SATA V2 Tier 2 / Preisstufe 2"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_sata",
+    "variant": "stealth",
+    "options": {
+      "tier": 3,
+      "detail": true
+    },
+    "name": "SATA V2 Tier 3 / Preisstufe 3"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_sata",
+    "variant": "stealth",
+    "options": {
+      "tier": 4,
+      "detail": true
+    },
+    "name": "SATA V2 Tier 4 / Preisstufe 4"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_sata",
+    "variant": "stealth",
+    "options": {
+      "tier": 5,
+      "detail": true
+    },
+    "name": "SATA V2 Tier 5 / Preisstufe 5"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_sata",
+    "variant": "rgb",
+    "options": {
+      "tier": 6,
+      "detail": true
+    },
+    "name": "SATA V2 Tier 6 / Preisstufe 6"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_sata",
+    "variant": "rgb",
+    "options": {
+      "tier": 7,
+      "detail": true
+    },
+    "name": "SATA V2 Tier 7 / Preisstufe 7"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_sata",
+    "variant": "rgb",
+    "options": {
+      "tier": 8,
+      "detail": true
+    },
+    "name": "SATA V2 Tier 8 / Preisstufe 8"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_sata",
+    "variant": "white",
+    "options": {
+      "tier": 9,
+      "detail": true
+    },
+    "name": "SATA V2 Tier 9 / Preisstufe 9"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_sata",
+    "variant": "white",
+    "options": {
+      "tier": 10,
+      "detail": true
+    },
+    "name": "SATA V2 Tier 10 / Preisstufe 10"
+  }
+]

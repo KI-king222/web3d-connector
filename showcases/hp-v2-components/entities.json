@@ -1,0 +1,1032 @@
+[
+  {
+    "type": "pc",
+    "kind": "gpu",
+    "variant": "stealth",
+    "options": {
+      "tier": 1,
+      "detail": false
+    },
+    "name": "GPU T1"
+  },
+  {
+    "type": "pc",
+    "kind": "gpu",
+    "variant": "stealth",
+    "options": {
+      "tier": 2,
+      "detail": false
+    },
+    "name": "GPU T2"
+  },
+  {
+    "type": "pc",
+    "kind": "gpu",
+    "variant": "stealth",
+    "options": {
+      "tier": 3,
+      "detail": false
+    },
+    "name": "GPU T3"
+  },
+  {
+    "type": "pc",
+    "kind": "gpu",
+    "variant": "stealth",
+    "options": {
+      "tier": 4,
+      "detail": false
+    },
+    "name": "GPU T4"
+  },
+  {
+    "type": "pc",
+    "kind": "gpu",
+    "variant": "stealth",
+    "options": {
+      "tier": 5,
+      "detail": false
+    },
+    "name": "GPU T5"
+  },
+  {
+    "type": "pc",
+    "kind": "gpu",
+    "variant": "rgb",
+    "options": {
+      "tier": 6,
+      "detail": false
+    },
+    "name": "GPU T6"
+  },
+  {
+    "type": "pc",
+    "kind": "gpu",
+    "variant": "rgb",
+    "options": {
+      "tier": 7,
+      "detail": false
+    },
+    "name": "GPU T7"
+  },
+  {
+    "type": "pc",
+    "kind": "gpu",
+    "variant": "rgb",
+    "options": {
+      "tier": 8,
+      "detail": false
+    },
+    "name": "GPU T8"
+  },
+  {
+    "type": "pc",
+    "kind": "gpu",
+    "variant": "rgb",
+    "options": {
+      "tier": 9,
+      "detail": false
+    },
+    "name": "GPU T9"
+  },
+  {
+    "type": "pc",
+    "kind": "gpu",
+    "variant": "rgb",
+    "options": {
+      "tier": 10,
+      "detail": false
+    },
+    "name": "GPU T10"
+  },
+  {
+    "type": "pc",
+    "kind": "cpu",
+    "variant": "stealth",
+    "options": {
+      "tier": 1,
+      "detail": false
+    },
+    "name": "CPU T1"
+  },
+  {
+    "type": "pc",
+    "kind": "cpu",
+    "variant": "stealth",
+    "options": {
+      "tier": 2,
+      "detail": false
+    },
+    "name": "CPU T2"
+  },
+  {
+    "type": "pc",
+    "kind": "cpu",
+    "variant": "stealth",
+    "options": {
+      "tier": 3,
+      "detail": false
+    },
+    "name": "CPU T3"
+  },
+  {
+    "type": "pc",
+    "kind": "cpu",
+    "variant": "stealth",
+    "options": {
+      "tier": 4,
+      "detail": false
+    },
+    "name": "CPU T4"
+  },
+  {
+    "type": "pc",
+    "kind": "cpu",
+    "variant": "stealth",
+    "options": {
+      "tier": 5,
+      "detail": false
+    },
+    "name": "CPU T5"
+  },
+  {
+    "type": "pc",
+    "kind": "cpu",
+    "variant": "rgb",
+    "options": {
+      "tier": 6,
+      "detail": false
+    },
+    "name": "CPU T6"
+  },
+  {
+    "type": "pc",
+    "kind": "cpu",
+    "variant": "rgb",
+    "options": {
+      "tier": 7,
+      "detail": false
+    },
+    "name": "CPU T7"
+  },
+  {
+    "type": "pc",
+    "kind": "cpu",
+    "variant": "rgb",
+    "options": {
+      "tier": 8,
+      "detail": false
+    },
+    "name": "CPU T8"
+  },
+  {
+    "type": "pc",
+    "kind": "cpu",
+    "variant": "rgb",
+    "options": {
+      "tier": 9,
+      "detail": false
+    },
+    "name": "CPU T9"
+  },
+  {
+    "type": "pc",
+    "kind": "cpu",
+    "variant": "rgb",
+    "options": {
+      "tier": 10,
+      "detail": false
+    },
+    "name": "CPU T10"
+  },
+  {
+    "type": "pc",
+    "kind": "motherboard",
+    "variant": "stealth",
+    "options": {
+      "tier": 1,
+      "detail": false,
+      "form": "atx"
+    },
+    "name": "Mobo T1"
+  },
+  {
+    "type": "pc",
+    "kind": "motherboard",
+    "variant": "stealth",
+    "options": {
+      "tier": 2,
+      "detail": false,
+      "form": "atx"
+    },
+    "name": "Mobo T2"
+  },
+  {
+    "type": "pc",
+    "kind": "motherboard",
+    "variant": "stealth",
+    "options": {
+      "tier": 3,
+      "detail": false,
+      "form": "atx"
+    },
+    "name": "Mobo T3"
+  },
+  {
+    "type": "pc",
+    "kind": "motherboard",
+    "variant": "stealth",
+    "options": {
+      "tier": 4,
+      "detail": false,
+      "form": "atx"
+    },
+    "name": "Mobo T4"
+  },
+  {
+    "type": "pc",
+    "kind": "motherboard",
+    "variant": "stealth",
+    "options": {
+      "tier": 5,
+      "detail": false,
+      "form": "atx"
+    },
+    "name": "Mobo T5"
+  },
+  {
+    "type": "pc",
+    "kind": "motherboard",
+    "variant": "rgb",
+    "options": {
+      "tier": 6,
+      "detail": false,
+      "form": "atx"
+    },
+    "name": "Mobo T6"
+  },
+  {
+    "type": "pc",
+    "kind": "motherboard",
+    "variant": "rgb",
+    "options": {
+      "tier": 7,
+      "detail": false,
+      "form": "atx"
+    },
+    "name": "Mobo T7"
+  },
+  {
+    "type": "pc",
+    "kind": "motherboard",
+    "variant": "rgb",
+    "options": {
+      "tier": 8,
+      "detail": false,
+      "form": "atx"
+    },
+    "name": "Mobo T8"
+  },
+  {
+    "type": "pc",
+    "kind": "motherboard",
+    "variant": "rgb",
+    "options": {
+      "tier": 9,
+      "detail": false,
+      "form": "atx"
+    },
+    "name": "Mobo T9"
+  },
+  {
+    "type": "pc",
+    "kind": "motherboard",
+    "variant": "rgb",
+    "options": {
+      "tier": 10,
+      "detail": false,
+      "form": "atx"
+    },
+    "name": "Mobo T10"
+  },
+  {
+    "type": "pc",
+    "kind": "ram",
+    "variant": "stealth",
+    "options": {
+      "tier": 1,
+      "detail": false
+    },
+    "name": "RAM T1"
+  },
+  {
+    "type": "pc",
+    "kind": "ram",
+    "variant": "stealth",
+    "options": {
+      "tier": 2,
+      "detail": false
+    },
+    "name": "RAM T2"
+  },
+  {
+    "type": "pc",
+    "kind": "ram",
+    "variant": "stealth",
+    "options": {
+      "tier": 3,
+      "detail": false
+    },
+    "name": "RAM T3"
+  },
+  {
+    "type": "pc",
+    "kind": "ram",
+    "variant": "stealth",
+    "options": {
+      "tier": 4,
+      "detail": false
+    },
+    "name": "RAM T4"
+  },
+  {
+    "type": "pc",
+    "kind": "ram",
+    "variant": "stealth",
+    "options": {
+      "tier": 5,
+      "detail": false
+    },
+    "name": "RAM T5"
+  },
+  {
+    "type": "pc",
+    "kind": "ram",
+    "variant": "rgb",
+    "options": {
+      "tier": 6,
+      "detail": false
+    },
+    "name": "RAM T6"
+  },
+  {
+    "type": "pc",
+    "kind": "ram",
+    "variant": "rgb",
+    "options": {
+      "tier": 7,
+      "detail": false
+    },
+    "name": "RAM T7"
+  },
+  {
+    "type": "pc",
+    "kind": "ram",
+    "variant": "rgb",
+    "options": {
+      "tier": 8,
+      "detail": false
+    },
+    "name": "RAM T8"
+  },
+  {
+    "type": "pc",
+    "kind": "ram",
+    "variant": "rgb",
+    "options": {
+      "tier": 9,
+      "detail": false
+    },
+    "name": "RAM T9"
+  },
+  {
+    "type": "pc",
+    "kind": "ram",
+    "variant": "rgb",
+    "options": {
+      "tier": 10,
+      "detail": false
+    },
+    "name": "RAM T10"
+  },
+  {
+    "type": "pc",
+    "kind": "cooler",
+    "variant": "stealth",
+    "options": {
+      "tier": 1,
+      "detail": false
+    },
+    "name": "Cooler T1"
+  },
+  {
+    "type": "pc",
+    "kind": "cooler",
+    "variant": "stealth",
+    "options": {
+      "tier": 2,
+      "detail": false
+    },
+    "name": "Cooler T2"
+  },
+  {
+    "type": "pc",
+    "kind": "cooler",
+    "variant": "stealth",
+    "options": {
+      "tier": 3,
+      "detail": false
+    },
+    "name": "Cooler T3"
+  },
+  {
+    "type": "pc",
+    "kind": "cooler",
+    "variant": "stealth",
+    "options": {
+      "tier": 4,
+      "detail": false
+    },
+    "name": "Cooler T4"
+  },
+  {
+    "type": "pc",
+    "kind": "cooler",
+    "variant": "stealth",
+    "options": {
+      "tier": 5,
+      "detail": false
+    },
+    "name": "Cooler T5"
+  },
+  {
+    "type": "pc",
+    "kind": "cooler",
+    "variant": "rgb",
+    "options": {
+      "tier": 6,
+      "detail": false
+    },
+    "name": "Cooler T6"
+  },
+  {
+    "type": "pc",
+    "kind": "cooler",
+    "variant": "rgb",
+    "options": {
+      "tier": 7,
+      "detail": false
+    },
+    "name": "Cooler T7"
+  },
+  {
+    "type": "pc",
+    "kind": "cooler",
+    "variant": "rgb",
+    "options": {
+      "tier": 8,
+      "detail": false
+    },
+    "name": "Cooler T8"
+  },
+  {
+    "type": "pc",
+    "kind": "cooler",
+    "variant": "rgb",
+    "options": {
+      "tier": 9,
+      "detail": false
+    },
+    "name": "Cooler T9"
+  },
+  {
+    "type": "pc",
+    "kind": "cooler",
+    "variant": "rgb",
+    "options": {
+      "tier": 10,
+      "detail": false
+    },
+    "name": "Cooler T10"
+  },
+  {
+    "type": "pc",
+    "kind": "psu",
+    "variant": "stealth",
+    "options": {
+      "tier": 1,
+      "detail": false
+    },
+    "name": "PSU T1"
+  },
+  {
+    "type": "pc",
+    "kind": "psu",
+    "variant": "stealth",
+    "options": {
+      "tier": 2,
+      "detail": false
+    },
+    "name": "PSU T2"
+  },
+  {
+    "type": "pc",
+    "kind": "psu",
+    "variant": "stealth",
+    "options": {
+      "tier": 3,
+      "detail": false
+    },
+    "name": "PSU T3"
+  },
+  {
+    "type": "pc",
+    "kind": "psu",
+    "variant": "stealth",
+    "options": {
+      "tier": 4,
+      "detail": false
+    },
+    "name": "PSU T4"
+  },
+  {
+    "type": "pc",
+    "kind": "psu",
+    "variant": "stealth",
+    "options": {
+      "tier": 5,
+      "detail": false
+    },
+    "name": "PSU T5"
+  },
+  {
+    "type": "pc",
+    "kind": "psu",
+    "variant": "rgb",
+    "options": {
+      "tier": 6,
+      "detail": false
+    },
+    "name": "PSU T6"
+  },
+  {
+    "type": "pc",
+    "kind": "psu",
+    "variant": "rgb",
+    "options": {
+      "tier": 7,
+      "detail": false
+    },
+    "name": "PSU T7"
+  },
+  {
+    "type": "pc",
+    "kind": "psu",
+    "variant": "rgb",
+    "options": {
+      "tier": 8,
+      "detail": false
+    },
+    "name": "PSU T8"
+  },
+  {
+    "type": "pc",
+    "kind": "psu",
+    "variant": "rgb",
+    "options": {
+      "tier": 9,
+      "detail": false
+    },
+    "name": "PSU T9"
+  },
+  {
+    "type": "pc",
+    "kind": "psu",
+    "variant": "rgb",
+    "options": {
+      "tier": 10,
+      "detail": false
+    },
+    "name": "PSU T10"
+  },
+  {
+    "type": "pc",
+    "kind": "case",
+    "variant": "stealth",
+    "options": {
+      "tier": 1,
+      "detail": false,
+      "size": "mini"
+    },
+    "name": "Case T1"
+  },
+  {
+    "type": "pc",
+    "kind": "case",
+    "variant": "stealth",
+    "options": {
+      "tier": 2,
+      "detail": false,
+      "size": "mini"
+    },
+    "name": "Case T2"
+  },
+  {
+    "type": "pc",
+    "kind": "case",
+    "variant": "stealth",
+    "options": {
+      "tier": 3,
+      "detail": false,
+      "size": "mini"
+    },
+    "name": "Case T3"
+  },
+  {
+    "type": "pc",
+    "kind": "case",
+    "variant": "stealth",
+    "options": {
+      "tier": 4,
+      "detail": false,
+      "size": "mid"
+    },
+    "name": "Case T4"
+  },
+  {
+    "type": "pc",
+    "kind": "case",
+    "variant": "stealth",
+    "options": {
+      "tier": 5,
+      "detail": false,
+      "size": "mid"
+    },
+    "name": "Case T5"
+  },
+  {
+    "type": "pc",
+    "kind": "case",
+    "variant": "rgb",
+    "options": {
+      "tier": 6,
+      "detail": false,
+      "size": "mid"
+    },
+    "name": "Case T6"
+  },
+  {
+    "type": "pc",
+    "kind": "case",
+    "variant": "rgb",
+    "options": {
+      "tier": 7,
+      "detail": false,
+      "size": "mid"
+    },
+    "name": "Case T7"
+  },
+  {
+    "type": "pc",
+    "kind": "case",
+    "variant": "rgb",
+    "options": {
+      "tier": 8,
+      "detail": false,
+      "size": "full"
+    },
+    "name": "Case T8"
+  },
+  {
+    "type": "pc",
+    "kind": "case",
+    "variant": "rgb",
+    "options": {
+      "tier": 9,
+      "detail": false,
+      "size": "full"
+    },
+    "name": "Case T9"
+  },
+  {
+    "type": "pc",
+    "kind": "case",
+    "variant": "rgb",
+    "options": {
+      "tier": 10,
+      "detail": false,
+      "size": "full"
+    },
+    "name": "Case T10"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_m2",
+    "variant": "stealth",
+    "options": {
+      "tier": 1,
+      "detail": false,
+      "heatsink": false
+    },
+    "name": "M2 T1"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_m2",
+    "variant": "stealth",
+    "options": {
+      "tier": 2,
+      "detail": false,
+      "heatsink": false
+    },
+    "name": "M2 T2"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_m2",
+    "variant": "stealth",
+    "options": {
+      "tier": 3,
+      "detail": false,
+      "heatsink": true
+    },
+    "name": "M2 T3"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_m2",
+    "variant": "stealth",
+    "options": {
+      "tier": 4,
+      "detail": false,
+      "heatsink": true
+    },
+    "name": "M2 T4"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_m2",
+    "variant": "stealth",
+    "options": {
+      "tier": 5,
+      "detail": false,
+      "heatsink": true
+    },
+    "name": "M2 T5"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_m2",
+    "variant": "rgb",
+    "options": {
+      "tier": 6,
+      "detail": false,
+      "heatsink": true
+    },
+    "name": "M2 T6"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_m2",
+    "variant": "rgb",
+    "options": {
+      "tier": 7,
+      "detail": false,
+      "heatsink": true
+    },
+    "name": "M2 T7"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_m2",
+    "variant": "rgb",
+    "options": {
+      "tier": 8,
+      "detail": false,
+      "heatsink": true
+    },
+    "name": "M2 T8"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_m2",
+    "variant": "rgb",
+    "options": {
+      "tier": 9,
+      "detail": false,
+      "heatsink": true
+    },
+    "name": "M2 T9"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_m2",
+    "variant": "rgb",
+    "options": {
+      "tier": 10,
+      "detail": false,
+      "heatsink": true
+    },
+    "name": "M2 T10"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_sata",
+    "variant": "stealth",
+    "options": {
+      "tier": 1,
+      "detail": false
+    },
+    "name": "SATA T1"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_sata",
+    "variant": "stealth",
+    "options": {
+      "tier": 2,
+      "detail": false
+    },
+    "name": "SATA T2"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_sata",
+    "variant": "stealth",
+    "options": {
+      "tier": 3,
+      "detail": false
+    },
+    "name": "SATA T3"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_sata",
+    "variant": "stealth",
+    "options": {
+      "tier": 4,
+      "detail": false
+    },
+    "name": "SATA T4"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_sata",
+    "variant": "stealth",
+    "options": {
+      "tier": 5,
+      "detail": false
+    },
+    "name": "SATA T5"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_sata",
+    "variant": "rgb",
+    "options": {
+      "tier": 6,
+      "detail": false
+    },
+    "name": "SATA T6"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_sata",
+    "variant": "rgb",
+    "options": {
+      "tier": 7,
+      "detail": false
+    },
+    "name": "SATA T7"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_sata",
+    "variant": "rgb",
+    "options": {
+      "tier": 8,
+      "detail": false
+    },
+    "name": "SATA T8"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_sata",
+    "variant": "rgb",
+    "options": {
+      "tier": 9,
+      "detail": false
+    },
+    "name": "SATA T9"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_sata",
+    "variant": "rgb",
+    "options": {
+      "tier": 10,
+      "detail": false
+    },
+    "name": "SATA T10"
+  },
+  {
+    "type": "pc",
+    "kind": "fan",
+    "variant": "stealth",
+    "options": {
+      "tier": 1,
+      "detail": false
+    },
+    "name": "Fan T1"
+  },
+  {
+    "type": "pc",
+    "kind": "fan",
+    "variant": "stealth",
+    "options": {
+      "tier": 2,
+      "detail": false
+    },
+    "name": "Fan T2"
+  },
+  {
+    "type": "pc",
+    "kind": "fan",
+    "variant": "stealth",
+    "options": {
+      "tier": 3,
+      "detail": false
+    },
+    "name": "Fan T3"
+  },
+  {
+    "type": "pc",
+    "kind": "fan",
+    "variant": "stealth",
+    "options": {
+      "tier": 4,
+      "detail": false
+    },
+    "name": "Fan T4"
+  },
+  {
+    "type": "pc",
+    "kind": "fan",
+    "variant": "stealth",
+    "options": {
+      "tier": 5,
+      "detail": false
+    },
+    "name": "Fan T5"
+  },
+  {
+    "type": "pc",
+    "kind": "fan",
+    "variant": "rgb",
+    "options": {
+      "tier": 6,
+      "detail": false
+    },
+    "name": "Fan T6"
+  },
+  {
+    "type": "pc",
+    "kind": "fan",
+    "variant": "rgb",
+    "options": {
+      "tier": 7,
+      "detail": false
+    },
+    "name": "Fan T7"
+  },
+  {
+    "type": "pc",
+    "kind": "fan",
+    "variant": "rgb",
+    "options": {
+      "tier": 8,
+      "detail": false
+    },
+    "name": "Fan T8"
+  },
+  {
+    "type": "pc",
+    "kind": "fan",
+    "variant": "rgb",
+    "options": {
+      "tier": 9,
+      "detail": false
+    },
+    "name": "Fan T9"
+  },
+  {
+    "type": "pc",
+    "kind": "fan",
+    "variant": "rgb",
+    "options": {
+      "tier": 10,
+      "detail": false
+    },
+    "name": "Fan T10"
+  }
+]
