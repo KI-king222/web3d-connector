@@ -157,6 +157,35 @@ canvas{display:block}
 #hud button{margin:2px;padding:6px 10px;border:0;border-radius:6px;background:#2a2a38;color:#fff;font-size:13px}
 #hud button:active{background:#44445a}`;
 
+// Die HASHPOOL-Showcases liegen dauerhaft im GitHub-Repo. Render Free leert
+// den Workspace bei Neustarts; beim Deploy werden sie deshalb automatisch
+// wieder in den aktiven Preview-Workspace kopiert.
+async function seedHashpoolShowcases() {
+  const source = path.resolve("showcases");
+  let dirs;
+  try { dirs = (await fs.readdir(source, { withFileTypes: true })).filter((e) => e.isDirectory()); }
+  catch { return 0; }
+  let seeded = 0;
+  for (const entry of dirs) {
+    const name = entry.name;
+    const entityFile = path.join(source, name, "entities.json");
+    try {
+      const entities = await fs.readFile(entityFile, "utf8");
+      const dest = safe(name);
+      await fs.mkdir(dest, { recursive: true });
+      await Promise.all([
+        fs.writeFile(path.join(dest, "index.html"), HTML(name)),
+        fs.writeFile(path.join(dest, "style.css"), CSS),
+        fs.writeFile(path.join(dest, "main.js"), await T("showcase-main.js")),
+        fs.writeFile(path.join(dest, "components.js"), await T("components.js")),
+        fs.writeFile(path.join(dest, "entities.json"), entities),
+      ]);
+      seeded++;
+    } catch (e) { console.warn(`Showcase ${name} konnte nicht angelegt werden:`, e.message); }
+  }
+  return seeded;
+}
+
 const MAIN = `import * as THREE from "three";
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(innerWidth, innerHeight);
@@ -408,6 +437,7 @@ NEUE TEILE: Funktion in Objekt B (components.js) ergaenzen, Primitive bx/rb/cy/f
 
 // ---------- HTTP ----------
 await fs.mkdir(ROOT, { recursive: true });
+const seededShowcases = await seedHashpoolShowcases();
 const app = express();
 app.use(express.json({ limit: "2mb" }));
 app.use("/preview", express.static(ROOT)); // Spiel im Browser oeffnen
@@ -483,5 +513,6 @@ app.get(["/mcp", "/mcp/:token"], (_, res) => res.status(405).json({ jsonrpc: "2.
 
 app.listen(PORT, () => {
   console.log(`MCP: http://localhost:${PORT}/mcp | Vorschau: /preview/<projekt>/`);
+  console.log(`HASHPOOL-Showcases geladen: ${seededShowcases}`);
   restoreAll(); // holt gesicherte Projekte zurueck (nur wenn STATE_REPO gesetzt ist)
 });
