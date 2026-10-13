@@ -1,0 +1,378 @@
+[
+  {
+    "type": "pc",
+    "kind": "gpu",
+    "variant": "stealth",
+    "options": {
+      "detail": false,
+      "tier": 1
+    },
+    "name": "gpu-stealth"
+  },
+  {
+    "type": "pc",
+    "kind": "gpu",
+    "variant": "white",
+    "options": {
+      "detail": false,
+      "tier": 1
+    },
+    "name": "gpu-white"
+  },
+  {
+    "type": "pc",
+    "kind": "gpu",
+    "variant": "rgb",
+    "options": {
+      "detail": false,
+      "tier": 1
+    },
+    "name": "gpu-rgb"
+  },
+  {
+    "type": "pc",
+    "kind": "gpu",
+    "variant": "retro",
+    "options": {
+      "detail": false,
+      "tier": 1
+    },
+    "name": "gpu-retro"
+  },
+  {
+    "type": "pc",
+    "kind": "cpu",
+    "variant": "stealth",
+    "options": {
+      "detail": false,
+      "tier": 2
+    },
+    "name": "cpu-stealth"
+  },
+  {
+    "type": "pc",
+    "kind": "cpu",
+    "variant": "white",
+    "options": {
+      "detail": false,
+      "tier": 2
+    },
+    "name": "cpu-white"
+  },
+  {
+    "type": "pc",
+    "kind": "cpu",
+    "variant": "rgb",
+    "options": {
+      "detail": false,
+      "tier": 2
+    },
+    "name": "cpu-rgb"
+  },
+  {
+    "type": "pc",
+    "kind": "cpu",
+    "variant": "retro",
+    "options": {
+      "detail": false,
+      "tier": 2
+    },
+    "name": "cpu-retro"
+  },
+  {
+    "type": "pc",
+    "kind": "motherboard",
+    "variant": "stealth",
+    "options": {
+      "detail": false,
+      "form": "atx"
+    },
+    "name": "motherboard-stealth"
+  },
+  {
+    "type": "pc",
+    "kind": "motherboard",
+    "variant": "white",
+    "options": {
+      "detail": false,
+      "form": "atx"
+    },
+    "name": "motherboard-white"
+  },
+  {
+    "type": "pc",
+    "kind": "motherboard",
+    "variant": "rgb",
+    "options": {
+      "detail": false,
+      "form": "atx"
+    },
+    "name": "motherboard-rgb"
+  },
+  {
+    "type": "pc",
+    "kind": "motherboard",
+    "variant": "retro",
+    "options": {
+      "detail": false,
+      "form": "atx"
+    },
+    "name": "motherboard-retro"
+  },
+  {
+    "type": "pc",
+    "kind": "ram",
+    "variant": "stealth",
+    "options": {
+      "detail": false
+    },
+    "name": "ram-stealth"
+  },
+  {
+    "type": "pc",
+    "kind": "ram",
+    "variant": "white",
+    "options": {
+      "detail": false
+    },
+    "name": "ram-white"
+  },
+  {
+    "type": "pc",
+    "kind": "ram",
+    "variant": "rgb",
+    "options": {
+      "detail": false
+    },
+    "name": "ram-rgb"
+  },
+  {
+    "type": "pc",
+    "kind": "ram",
+    "variant": "retro",
+    "options": {
+      "detail": false
+    },
+    "name": "ram-retro"
+  },
+  {
+    "type": "pc",
+    "kind": "cooler",
+    "variant": "stealth",
+    "options": {
+      "detail": false
+    },
+    "name": "cooler-stealth"
+  },
+  {
+    "type": "pc",
+    "kind": "cooler",
+    "variant": "white",
+    "options": {
+      "detail": false
+    },
+    "name": "cooler-white"
+  },
+  {
+    "type": "pc",
+    "kind": "cooler",
+    "variant": "rgb",
+    "options": {
+      "detail": false
+    },
+    "name": "cooler-rgb"
+  },
+  {
+    "type": "pc",
+    "kind": "cooler",
+    "variant": "retro",
+    "options": {
+      "detail": false
+    },
+    "name": "cooler-retro"
+  },
+  {
+    "type": "pc",
+    "kind": "psu",
+    "variant": "stealth",
+    "options": {
+      "detail": false
+    },
+    "name": "psu-stealth"
+  },
+  {
+    "type": "pc",
+    "kind": "psu",
+    "variant": "white",
+    "options": {
+      "detail": false
+    },
+    "name": "psu-white"
+  },
+  {
+    "type": "pc",
+    "kind": "psu",
+    "variant": "rgb",
+    "options": {
+      "detail": false
+    },
+    "name": "psu-rgb"
+  },
+  {
+    "type": "pc",
+    "kind": "psu",
+    "variant": "retro",
+    "options": {
+      "detail": false
+    },
+    "name": "psu-retro"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_m2",
+    "variant": "stealth",
+    "options": {
+      "detail": false
+    },
+    "name": "ssd_m2-stealth"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_m2",
+    "variant": "white",
+    "options": {
+      "detail": false
+    },
+    "name": "ssd_m2-white"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_m2",
+    "variant": "rgb",
+    "options": {
+      "detail": false
+    },
+    "name": "ssd_m2-rgb"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_m2",
+    "variant": "retro",
+    "options": {
+      "detail": false
+    },
+    "name": "ssd_m2-retro"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_sata",
+    "variant": "stealth",
+    "options": {
+      "detail": false
+    },
+    "name": "ssd_sata-stealth"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_sata",
+    "variant": "white",
+    "options": {
+      "detail": false
+    },
+    "name": "ssd_sata-white"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_sata",
+    "variant": "rgb",
+    "options": {
+      "detail": false
+    },
+    "name": "ssd_sata-rgb"
+  },
+  {
+    "type": "pc",
+    "kind": "ssd_sata",
+    "variant": "retro",
+    "options": {
+      "detail": false
+    },
+    "name": "ssd_sata-retro"
+  },
+  {
+    "type": "pc",
+    "kind": "fan",
+    "variant": "stealth",
+    "options": {
+      "detail": false
+    },
+    "name": "fan-stealth"
+  },
+  {
+    "type": "pc",
+    "kind": "fan",
+    "variant": "white",
+    "options": {
+      "detail": false
+    },
+    "name": "fan-white"
+  },
+  {
+    "type": "pc",
+    "kind": "fan",
+    "variant": "rgb",
+    "options": {
+      "detail": false
+    },
+    "name": "fan-rgb"
+  },
+  {
+    "type": "pc",
+    "kind": "fan",
+    "variant": "retro",
+    "options": {
+      "detail": false
+    },
+    "name": "fan-retro"
+  },
+  {
+    "type": "pc",
+    "kind": "case",
+    "variant": "stealth",
+    "options": {
+      "detail": false,
+      "size": "mid"
+    },
+    "name": "case-stealth"
+  },
+  {
+    "type": "pc",
+    "kind": "case",
+    "variant": "white",
+    "options": {
+      "detail": false,
+      "size": "mid"
+    },
+    "name": "case-white"
+  },
+  {
+    "type": "pc",
+    "kind": "case",
+    "variant": "rgb",
+    "options": {
+      "detail": false,
+      "size": "mid"
+    },
+    "name": "case-rgb"
+  },
+  {
+    "type": "pc",
+    "kind": "case",
+    "variant": "retro",
+    "options": {
+      "detail": false,
+      "size": "mid"
+    },
+    "name": "case-retro"
+  }
+]

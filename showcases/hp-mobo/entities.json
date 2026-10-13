@@ -1,0 +1,11 @@
+[
+  {
+    "type": "pc",
+    "kind": "motherboard",
+    "variant": "rgb",
+    "options": {
+      "form": "atx"
+    },
+    "name": "hashpool-atx-board"
+  }
+]

@@ -1,0 +1,92 @@
+[
+  {
+    "type": "pc",
+    "kind": "gpu",
+    "variant": "stealth",
+    "options": {
+      "tier": 1
+    },
+    "name": "gpu-tier-1"
+  },
+  {
+    "type": "pc",
+    "kind": "gpu",
+    "variant": "stealth",
+    "options": {
+      "tier": 2
+    },
+    "name": "gpu-tier-2"
+  },
+  {
+    "type": "pc",
+    "kind": "gpu",
+    "variant": "stealth",
+    "options": {
+      "tier": 3
+    },
+    "name": "gpu-tier-3"
+  },
+  {
+    "type": "pc",
+    "kind": "gpu",
+    "variant": "stealth",
+    "options": {
+      "tier": 4
+    },
+    "name": "gpu-tier-4"
+  },
+  {
+    "type": "pc",
+    "kind": "gpu",
+    "variant": "rgb",
+    "options": {
+      "tier": 5
+    },
+    "name": "gpu-tier-5"
+  },
+  {
+    "type": "pc",
+    "kind": "gpu",
+    "variant": "rgb",
+    "options": {
+      "tier": 6
+    },
+    "name": "gpu-tier-6"
+  },
+  {
+    "type": "pc",
+    "kind": "gpu",
+    "variant": "rgb",
+    "options": {
+      "tier": 7
+    },
+    "name": "gpu-tier-7"
+  },
+  {
+    "type": "pc",
+    "kind": "gpu",
+    "variant": "rgb",
+    "options": {
+      "tier": 8
+    },
+    "name": "gpu-tier-8"
+  },
+  {
+    "type": "pc",
+    "kind": "gpu",
+    "variant": "rgb",
+    "options": {
+      "tier": 9
+    },
+    "name": "gpu-tier-9"
+  },
+  {
+    "type": "pc",
+    "kind": "gpu",
+    "variant": "rgb",
+    "options": {
+      "tier": 10
+    },
+    "name": "gpu-tier-10"
+  }
+]

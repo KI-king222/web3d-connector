@@ -1,0 +1,92 @@
+[
+  {
+    "type": "pc",
+    "kind": "cpu",
+    "variant": "stealth",
+    "options": {
+      "tier": 1
+    },
+    "name": "cpu-tier-1"
+  },
+  {
+    "type": "pc",
+    "kind": "cpu",
+    "variant": "stealth",
+    "options": {
+      "tier": 2
+    },
+    "name": "cpu-tier-2"
+  },
+  {
+    "type": "pc",
+    "kind": "cpu",
+    "variant": "stealth",
+    "options": {
+      "tier": 3
+    },
+    "name": "cpu-tier-3"
+  },
+  {
+    "type": "pc",
+    "kind": "cpu",
+    "variant": "stealth",
+    "options": {
+      "tier": 4
+    },
+    "name": "cpu-tier-4"
+  },
+  {
+    "type": "pc",
+    "kind": "cpu",
+    "variant": "stealth",
+    "options": {
+      "tier": 5
+    },
+    "name": "cpu-tier-5"
+  },
+  {
+    "type": "pc",
+    "kind": "cpu",
+    "variant": "stealth",
+    "options": {
+      "tier": 6
+    },
+    "name": "cpu-tier-6"
+  },
+  {
+    "type": "pc",
+    "kind": "cpu",
+    "variant": "white",
+    "options": {
+      "tier": 7
+    },
+    "name": "cpu-tier-7"
+  },
+  {
+    "type": "pc",
+    "kind": "cpu",
+    "variant": "white",
+    "options": {
+      "tier": 8
+    },
+    "name": "cpu-tier-8"
+  },
+  {
+    "type": "pc",
+    "kind": "cpu",
+    "variant": "white",
+    "options": {
+      "tier": 9
+    },
+    "name": "cpu-tier-9"
+  },
+  {
+    "type": "pc",
+    "kind": "cpu",
+    "variant": "white",
+    "options": {
+      "tier": 10
+    },
+    "name": "cpu-tier-10"
+  }
+]

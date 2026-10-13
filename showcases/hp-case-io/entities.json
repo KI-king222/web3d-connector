@@ -1,0 +1,11 @@
+[
+  {
+    "type": "pc",
+    "kind": "case",
+    "variant": "stealth",
+    "options": {
+      "size": "mid"
+    },
+    "name": "hashpool-mid-tower"
+  }
+]

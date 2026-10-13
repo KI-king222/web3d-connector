@@ -133,9 +133,9 @@ function boardDetail(g, t, m) {
   lab("ATX24", 22, 5, m.atx24[0] - 14, m.atx24[1]);
 }
 
-function gpuDetail(g, t, L, Wd, T, H) {
+function gpuDetail(g, t, L, Wd, T, H, labelText = "VOLT RX 9090") {
   const dk = mat(0x0b0b0d, { roughness: 0.8 });
-  const l = label("VOLT RX 9090", Math.min(L * 0.45, 120), 14, { color: hex6(t.accent), opacity: 0.95 });
+  const l = label(labelText, Math.min(L * 0.58, 150), 14, { color: hex6(t.accent), opacity: 0.95 });
   l.rotation.z = Math.PI; l.position.set(0, 5 + H / 2, Wd / 2 + 0.25); g.add(l);   // Logo auf der Glasseite
   for (let i = 0; i < 14; i++) g.add(bx(4, 0.5, Wd * 0.5, dk, -L * 0.3 + i * 7, 2.1, 0));  // Lueftungsschlitze Backplate
   g.add(bx(22, 9, 12, dk, L / 2 - 70, 9, Wd / 2 - 8));                                       // zweiter 8-Pin
@@ -183,7 +183,9 @@ export function mbLayout(form = "atx") {
   return {
     L, W, socket: [sx, sz],
     ram: { x0: sx + 52, z: sz - 8, pitch: 12, n: form === "itx" ? 2 : 4 },
-    pcie: [-L / 2 + 60, -W * 0.18], m2: [sx - 5, -W * 0.06],
+    // Der erste x16-Slot sitzt im sichtbaren Top-down-Layout direkt unter
+    // dem Sockel; M.2 liegt dazwischen, RAM rechts vom Sockel.
+    pcie: [sx - 10, -W * 0.18], m2: [sx - 5, -W * 0.06],
     atx24: [L / 2 - 6, W * 0.1], cpu8: [sx - 30, W / 2 - 8],
   };
 }
@@ -207,11 +209,11 @@ const P = {
     t10:{ length: 352, width: 148, slots: 3.5, fans: 3, rgb: true, backplate: true, premium: true },
   },
   cpu: {
-    t1:{ size:26,ihs:16,pins:false,gold:false }, t2:{ size:28,ihs:18,pins:false,gold:false },
-    t3:{ size:32,ihs:22,pins:true,gold:false }, t4:{ size:34,ihs:26,pins:true,gold:false },
-    t5:{ size:37,ihs:29,pins:true,gold:true }, t6:{ size:40,ihs:32,pins:true,gold:true },
-    t7:{ size:43,ihs:35,pins:true,gold:true }, t8:{ size:46,ihs:38,pins:true,gold:true },
-    t9:{ size:48,ihs:40,pins:true,gold:true,logo:true }, t10:{ size:52,ihs:44,pins:true,gold:true,logo:true },
+    t1:{ size:26,ihs:16,pins:false,gold:false,label:"Axiom Pulse G2" }, t2:{ size:28,ihs:18,pins:false,gold:false,label:"Ember Spark 3K" },
+    t3:{ size:32,ihs:22,pins:true,gold:false,label:"Axiom Flux 3-1210" }, t4:{ size:34,ihs:26,pins:true,gold:false,label:"Ember Pyra 5 5600" },
+    t5:{ size:37,ihs:29,pins:true,gold:true,label:"Axiom Flux 5-1340F" }, t6:{ size:40,ihs:32,pins:true,gold:true,label:"Ember Pyra 7 5700" },
+    t7:{ size:43,ihs:35,pins:true,gold:true,label:"Axiom Flux 7-1370K" }, t8:{ size:46,ihs:38,pins:true,gold:true,label:"Ember Pyra 9 7900" },
+    t9:{ size:48,ihs:40,pins:true,gold:true,logo:true,label:"Axiom Flux 9-1490K" }, t10:{ size:52,ihs:44,pins:true,gold:true,logo:true,label:"Ember Pyra 9 7950 3D" },
   },
   cooler: { lowprofile: { height: 70, fins: 24, fans: 1 }, tower: {}, dual: { height: 165, fans: 2, fins: 44 } },
 };
@@ -234,7 +236,7 @@ const B = {
     }
     if (tier >= 5) g.add(bx(2, 0.35, 2, gold(), -I * 0.3, 2.9 + tier * 0.1, -I * 0.3));
     if (tier >= 8) {
-      const lab = flatLabel(tier >= 10 ? "NOVA X3D" : "NOVA", I * 0.6, 6, { color: hex6(t.accent), opacity: 0.95 });
+      const lab = flatLabel(c.label || (tier >= 10 ? "NOVA X3D" : "NOVA"), I * 0.72, 6, { color: hex6(t.accent), opacity: 0.95 });
       lab.position.set(0, 3.0 + tier * 0.12, 0); g.add(lab);
     }
     if (tier >= 3) {
@@ -345,6 +347,7 @@ const B = {
       length: 300, width: 115, slots: 2.5, fans: 3, rgb: true, backplate: true, plastic: false, premium: false,
       ...(P.gpu[pk] || P.gpu.t6), ...o,
     };
+    const gpuLabel = c.label || ["Quanta Lite 1030", "Ember Blaze 640", "Quanta Core 1650", "Ember Blaze 660", "Quanta Pro 3060", "Ember Blaze 760", "Quanta Pro 4070", "Ember Blaze 780 XT", "Quanta Elite 4080", "Quanta Titan 4090"][Math.max(0, Math.min(9, tier - 1))];
     const L = c.length, Wd = c.width, T = Math.max(c.slots * 20.3, 28), n = Math.max(1, c.fans | 0);
     const g = new THREE.Group();
     const body = mat(c.plastic ? 0x2e2e34 : t.body, {
@@ -411,7 +414,7 @@ const B = {
         g.add(bx(L - 60, 0.6, 0.8, gold(), 0, T - 2, -Wd / 2 + 3));
         g.add(bx(8, H - 4, 2, glow(t.accent, 1.1), L / 2 - 6, sy, 0));
       }
-      if (c.detail !== false && tier >= 5) gpuDetail(g, t, L, Wd, T, H);
+      if (c.detail !== false && tier >= 5) gpuDetail(g, t, L, Wd, T, H, gpuLabel);
     }
     g.userData.dims = { L, Wd, T, tier };
     return g;
