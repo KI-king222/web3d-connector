@@ -1,0 +1,112 @@
+[
+  {
+    "type": "pc",
+    "kind": "motherboard",
+    "variant": "retro",
+    "options": {
+      "tier": 1,
+      "detail": true,
+      "form": "atx"
+    },
+    "name": "Mainboard Realistic V3 Tier 1"
+  },
+  {
+    "type": "pc",
+    "kind": "motherboard",
+    "variant": "retro",
+    "options": {
+      "tier": 2,
+      "detail": true,
+      "form": "atx"
+    },
+    "name": "Mainboard Realistic V3 Tier 2"
+  },
+  {
+    "type": "pc",
+    "kind": "motherboard",
+    "variant": "stealth",
+    "options": {
+      "tier": 3,
+      "detail": true,
+      "form": "atx"
+    },
+    "name": "Mainboard Realistic V3 Tier 3"
+  },
+  {
+    "type": "pc",
+    "kind": "motherboard",
+    "variant": "stealth",
+    "options": {
+      "tier": 4,
+      "detail": true,
+      "form": "atx"
+    },
+    "name": "Mainboard Realistic V3 Tier 4"
+  },
+  {
+    "type": "pc",
+    "kind": "motherboard",
+    "variant": "stealth",
+    "options": {
+      "tier": 5,
+      "detail": true,
+      "form": "atx"
+    },
+    "name": "Mainboard Realistic V3 Tier 5"
+  },
+  {
+    "type": "pc",
+    "kind": "motherboard",
+    "variant": "rgb",
+    "options": {
+      "tier": 6,
+      "detail": true,
+      "form": "atx"
+    },
+    "name": "Mainboard Realistic V3 Tier 6"
+  },
+  {
+    "type": "pc",
+    "kind": "motherboard",
+    "variant": "rgb",
+    "options": {
+      "tier": 7,
+      "detail": true,
+      "form": "atx"
+    },
+    "name": "Mainboard Realistic V3 Tier 7"
+  },
+  {
+    "type": "pc",
+    "kind": "motherboard",
+    "variant": "rgb",
+    "options": {
+      "tier": 8,
+      "detail": true,
+      "form": "atx"
+    },
+    "name": "Mainboard Realistic V3 Tier 8"
+  },
+  {
+    "type": "pc",
+    "kind": "motherboard",
+    "variant": "white",
+    "options": {
+      "tier": 9,
+      "detail": true,
+      "form": "atx"
+    },
+    "name": "Mainboard Realistic V3 Tier 9"
+  },
+  {
+    "type": "pc",
+    "kind": "motherboard",
+    "variant": "white",
+    "options": {
+      "tier": 10,
+      "detail": true,
+      "form": "atx"
+    },
+    "name": "Mainboard Realistic V3 Tier 10"
+  }
+]

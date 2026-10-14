@@ -142,6 +142,18 @@ function gpuDetail(g, t, L, Wd, T, H, labelText = "VOLT RX 9090") {
   g.add(bx(18, 1, 2.2, mat(0xd4af37, { metalness: 1, roughness: 0.3 }), L / 2 - 70, 13.7, Wd / 2 - 8));
 }
 
+// Versenkte Luefterrahmen mit Nabe und sichtbaren Befestigungsschrauben:
+// reale Grafikkarten haben keine frei aufgesetzten Ringe auf einer Box.
+function gpuFanRecess(g, t, x, y, size, tier) {
+  const housing = mat(0x090a0d, { metalness: 0.35, roughness: 0.72 });
+  g.add(cy(size * 0.49, 1.8, housing, x, y - 1.2, 0, 48));
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(size * 0.45, Math.max(1.4, size * 0.025), 10, 48), glow(t.accent, tier >= 7 ? 0.95 : 0.38));
+  rim.rotation.x = Math.PI / 2; rim.position.set(x, y + 0.4, 0); g.add(rim);
+  g.add(cy(size * 0.12, 2.2, mat(0x16181d, { metalness: 0.55, roughness: 0.42 }), x, y + 1.2, 0, 32));
+  for (const [sx, sz] of [[-1, -1], [-1, 1], [1, -1], [1, 1]])
+    g.add(cy(1.5, 1.2, gold(), x + sx * size * 0.36, y + 1.5, sz * size * 0.36, 12));
+}
+
 function caseDetail(g, t, { W, H, D }) {
   const dk = mat(0x0b0b0d, { roughness: 0.8 }), metal = mat(t.metal, { metalness: 0.9, roughness: 0.3 });
   for (let i = 0; i < 16; i++) g.add(bx(W - 80, 0.6, 5, dk, 0, H / 2 + 0.1, -D / 2 + 60 + i * 14));   // Dach-Lueftung
@@ -414,7 +426,15 @@ const B = {
       for (let i = 0; i < n; i++) {
         const f = fan(size - 4, t, 9, tier >= 7 ? 11 : 9);
         f.position.set((i - (n - 1) / 2) * size, T - 12.5, 0); g.add(f);
+        gpuFanRecess(g, t, (i - (n - 1) / 2) * size, T - 14, size - 4, tier);
       }
+      const split = Math.max(1, n - 1);
+      for (let i = 0; i < split; i++) {
+        const sx = (i - (split - 1) / 2) * size + size / 2;
+        g.add(bx(2.4, H - 10, 8, metal, sx, sy, 0));
+      }
+      g.add(bx(L - 34, 2.2, 5, metal, 0, T - 1.2, -Wd / 2 + 4));
+      g.add(bx(L - 34, 2.2, 5, metal, 0, T - 1.2, Wd / 2 - 4));
       for (let i = 0; i < (tier <= 5 ? 3 : 4); i++)
         g.add(bx(3, 7, 15, dark(), -L / 2 - 1, T * 0.5, -Wd / 2 + 18 + i * 20));
       if (c.rgb) g.add(bx(L - 40, 1, 1.2, glow(t.accent), 0, T, Wd / 2 - 2));
