@@ -91,4 +91,10 @@ function caseV4(tier){
  return g;
 }
 
-export function buildV4(kind, tier=6){const t=Number(tier)||6;switch(kind){case 'v4_gpu':return gpu(t);case 'v4_cpu':return cpu(t);case 'v4_motherboard':return motherboard(t);case 'v4_ram':return ram(t);case 'v4_cooler':return cooler(t);case 'v4_aio':return aio(t);case 'v4_psu':return psu(t);case 'v4_ssd':return ssd(t);case 'v4_fan':return fanV4(t);case 'v4_case':return caseV4(t);default:return gpu(t);}}
+export function buildV4(kind, tier=6){
+ const t=Number(tier)||6;
+ const g=(()=>{switch(kind){case 'v4_gpu':return gpu(t);case 'v4_cpu':return cpu(t);case 'v4_motherboard':return motherboard(t);case 'v4_ram':return ram(t);case 'v4_cooler':return cooler(t);case 'v4_aio':return aio(t);case 'v4_psu':return psu(t);case 'v4_ssd':return ssd(t);case 'v4_fan':return fanV4(t);case 'v4_case':return caseV4(t);default:return gpu(t);}})();
+ // Alle V4-Bauteile sind in echten Millimetern modelliert; die Showcase-
+ // Szene nutzt wie die vorhandene Bibliothek 1 Einheit = 10 cm.
+ g.scale.setScalar(0.01); return g;
+}
