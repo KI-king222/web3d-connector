@@ -1,0 +1,92 @@
+[
+  {
+    "type": "pc",
+    "kind": "v4_ram",
+    "variant": "stealth",
+    "options": {
+      "tier": 1
+    },
+    "name": "DDR5 RAM Real World V4 \u2013 Klasse 1"
+  },
+  {
+    "type": "pc",
+    "kind": "v4_ram",
+    "variant": "stealth",
+    "options": {
+      "tier": 2
+    },
+    "name": "DDR5 RAM Real World V4 \u2013 Klasse 2"
+  },
+  {
+    "type": "pc",
+    "kind": "v4_ram",
+    "variant": "stealth",
+    "options": {
+      "tier": 3
+    },
+    "name": "DDR5 RAM Real World V4 \u2013 Klasse 3"
+  },
+  {
+    "type": "pc",
+    "kind": "v4_ram",
+    "variant": "stealth",
+    "options": {
+      "tier": 4
+    },
+    "name": "DDR5 RAM Real World V4 \u2013 Klasse 4"
+  },
+  {
+    "type": "pc",
+    "kind": "v4_ram",
+    "variant": "stealth",
+    "options": {
+      "tier": 5
+    },
+    "name": "DDR5 RAM Real World V4 \u2013 Klasse 5"
+  },
+  {
+    "type": "pc",
+    "kind": "v4_ram",
+    "variant": "stealth",
+    "options": {
+      "tier": 6
+    },
+    "name": "DDR5 RAM Real World V4 \u2013 Klasse 6"
+  },
+  {
+    "type": "pc",
+    "kind": "v4_ram",
+    "variant": "stealth",
+    "options": {
+      "tier": 7
+    },
+    "name": "DDR5 RAM Real World V4 \u2013 Klasse 7"
+  },
+  {
+    "type": "pc",
+    "kind": "v4_ram",
+    "variant": "stealth",
+    "options": {
+      "tier": 8
+    },
+    "name": "DDR5 RAM Real World V4 \u2013 Klasse 8"
+  },
+  {
+    "type": "pc",
+    "kind": "v4_ram",
+    "variant": "stealth",
+    "options": {
+      "tier": 9
+    },
+    "name": "DDR5 RAM Real World V4 \u2013 Klasse 9"
+  },
+  {
+    "type": "pc",
+    "kind": "v4_ram",
+    "variant": "stealth",
+    "options": {
+      "tier": 10
+    },
+    "name": "DDR5 RAM Real World V4 \u2013 Klasse 10"
+  }
+]

@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { buildPC, THEMES } from "./components.js";
+import { buildV4 } from "./realistic-v4.js";
 
 const q = new URLSearchParams(location.search);
 const shot = q.has("view"); // Screenshot-Modus: leichter (kein AA, keine Schatten)
@@ -47,7 +48,7 @@ function build() {
   const items = [];
   for (const e of list) {
     const m = e.type === "pc"
-      ? buildPC(e.kind, override || e.variant, e.accent, e.options)
+      ? (e.kind.startsWith("v4_") ? buildV4(e.kind, e.options?.tier) : buildPC(e.kind, override || e.variant, e.accent, e.options))
       : new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: e.color || "#999" }));
     if (e.scale) m.scale.set(...e.scale);
     if (e.rotationY) m.rotation.y = e.rotationY;
