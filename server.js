@@ -178,6 +178,7 @@ async function seedHashpoolShowcases() {
         fs.writeFile(path.join(dest, "style.css"), CSS),
         fs.writeFile(path.join(dest, "main.js"), await T("showcase-main.js")),
         fs.writeFile(path.join(dest, "components.js"), await T("components.js")),
+        fs.writeFile(path.join(dest, "realistic-v4.js"), await T("realistic-v4.js")),
         fs.writeFile(path.join(dest, "entities.json"), entities),
       ]);
       seeded++;
@@ -440,6 +441,13 @@ await fs.mkdir(ROOT, { recursive: true });
 const seededShowcases = await seedHashpoolShowcases();
 const app = express();
 app.use(express.json({ limit: "2mb" }));
+// V4-Showcases importieren eine zusaetzliche Builder-Datei. Diese Route stellt
+// sie direkt aus dem deployten Template bereit, falls ein alter Workspace-
+// Restore nur die Standarddateien des Projekts wiederhergestellt hat.
+app.get("/preview/:project/realistic-v4.js", async (_req, res) => {
+  try { res.type("application/javascript").send(await T("realistic-v4.js")); }
+  catch (e) { res.status(404).json({ error: e.message }); }
+});
 app.use("/preview", express.static(ROOT)); // Spiel im Browser oeffnen
 
 const auth = (req, res, next) => (TOKEN && req.get("authorization") === `Bearer ${TOKEN}` ? next() : res.status(401).json({ error: "unauthorized" }));
