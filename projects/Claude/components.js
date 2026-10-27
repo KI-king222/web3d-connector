@@ -22,11 +22,11 @@ export const THEMES = {
 };
 
 /* ---------- Primitive ---------- */
-const mat = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, metalness: 0.5, roughness: 0.45, ...o });
-const glow = (c, i = 1.4) => new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: i });
-const dark = () => mat(0x0b0b0d, { metalness: 0.2, roughness: 0.7 });
-const gold = () => mat(0xd4af37, { metalness: 1, roughness: 0.3 });
-const shadow = (o) => { o.castShadow = o.receiveShadow = true; return o; };
+export const mat = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, metalness: 0.5, roughness: 0.45, ...o });
+export const glow = (c, i = 1.4) => new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: i });
+export const dark = () => mat(0x0b0b0d, { metalness: 0.2, roughness: 0.7 });
+export const gold = () => mat(0xd4af37, { metalness: 1, roughness: 0.3 });
+export const shadow = (o) => { o.castShadow = o.receiveShadow = true; return o; };
 
 /** Box: Breite, Hoehe, Tiefe, Material, Position */
 export const bx = (w, h, d, m, x = 0, y = 0, z = 0) => {
@@ -68,7 +68,7 @@ export function fan(size, t, speed = 8, blades = 9) {
 /* ---------- Details: Beschriftung, Kabelbuendel, Feinheiten ---------- */
 let _seed = 7;
 const rnd = () => ((_seed = (_seed * 16807) % 2147483647) / 2147483647);
-const hex6 = (n) => "#" + n.toString(16).padStart(6, "0");
+export const hex6 = (n) => "#" + n.toString(16).padStart(6, "0");
 
 /** Text als Textur auf einer Flaeche (Normale +z). Nur im Browser, sonst leere Gruppe. */
 export function label(text, w, h, o = {}) {
@@ -135,23 +135,108 @@ function boardDetail(g, t, m) {
 
 function gpuDetail(g, t, L, Wd, T, H, labelText = "VOLT RX 9090") {
   const dk = mat(0x0b0b0d, { roughness: 0.8 });
-  const l = label(labelText, Math.min(L * 0.58, 150), 14, { color: hex6(t.accent), opacity: 0.95 });
-  l.rotation.z = Math.PI; l.position.set(0, 5 + H / 2, Wd / 2 + 0.25); g.add(l);   // Logo auf der Glasseite
-  for (let i = 0; i < 14; i++) g.add(bx(4, 0.5, Wd * 0.5, dk, -L * 0.3 + i * 7, 2.1, 0));  // Lueftungsschlitze Backplate
+  const lw = Math.min(L * 0.58, 150), lx = Math.min(0, (L / 2 - 92) - lw / 2);     // Logo bleibt links vom Stromstecker-Ausschnitt
+  const l = label(labelText, lw, 14, { color: hex6(t.accent), opacity: 0.95 });
+  l.rotation.z = Math.PI; l.position.set(lx, 5 + H / 2, Wd / 2 + 0.25); g.add(l);   // Logo auf der Glasseite
+  for (let i = 0; i < 14; i++) g.add(bx(4, 0.6, Wd * 0.5, dk, -L * 0.3 + i * 7, 0, 0));  // Lueftungsschlitze Backplate (Aussenseite)
   g.add(bx(22, 9, 12, dk, L / 2 - 70, 9, Wd / 2 - 8));                                       // zweiter 8-Pin
   g.add(bx(18, 1, 2.2, mat(0xd4af37, { metalness: 1, roughness: 0.3 }), L / 2 - 70, 13.7, Wd / 2 - 8));
 }
 
-// Versenkte Luefterrahmen mit Nabe und sichtbaren Befestigungsschrauben:
-// reale Grafikkarten haben keine frei aufgesetzten Ringe auf einer Box.
-function gpuFanRecess(g, t, x, y, size, tier) {
-  const housing = mat(0x090a0d, { metalness: 0.35, roughness: 0.72 });
-  g.add(cy(size * 0.49, 1.8, housing, x, y - 1.2, 0, 48));
-  const rim = new THREE.Mesh(new THREE.TorusGeometry(size * 0.45, Math.max(1.4, size * 0.025), 10, 48), glow(t.accent, tier >= 7 ? 0.95 : 0.38));
-  rim.rotation.x = Math.PI / 2; rim.position.set(x, y + 0.4, 0); g.add(rim);
-  g.add(cy(size * 0.12, 2.2, mat(0x16181d, { metalness: 0.55, roughness: 0.42 }), x, y + 1.2, 0, 32));
-  for (const [sx, sz] of [[-1, -1], [-1, 1], [1, -1], [1, 1]])
-    g.add(cy(1.5, 1.2, gold(), x + sx * size * 0.36, y + 1.5, sz * size * 0.36, 12));
+/* ---------- GPU: Shroud-Platte mit runden Ausschnitten, runde Luefter ----------
+ * Reale Grafikkarten haben KEINEN eckigen Rahmen um den Luefter: Der Luefter sitzt
+ * rund in einem Loch der Abdeckung (Shroud), darunter liegen die Kuehllamellen.   */
+
+/** Platte (Laenge L, Breite W, Dicke th) mit runden Loechern bei x = cxs. Liegt in der XZ-Ebene, y = 0..th. */
+export function gpuPlate(L, W, th, cxs, r, corner = 1.5) {
+  const s = new THREE.Shape(), x0 = -L / 2, x1 = L / 2, y0 = -W / 2, y1 = W / 2, k = Math.min(corner, W / 2, L / 2);
+  s.moveTo(x0 + k, y0); s.lineTo(x1 - k, y0); s.quadraticCurveTo(x1, y0, x1, y0 + k);
+  s.lineTo(x1, y1 - k); s.quadraticCurveTo(x1, y1, x1 - k, y1);
+  s.lineTo(x0 + k, y1); s.quadraticCurveTo(x0, y1, x0, y1 - k);
+  s.lineTo(x0, y0 + k); s.quadraticCurveTo(x0, y0, x0 + k, y0);
+  cxs.forEach((cx) => { const h = new THREE.Path(); h.absarc(cx, 0, r, 0, Math.PI * 2, true); s.holes.push(h); });
+  const geo = new THREE.ExtrudeGeometry(s, { depth: th, bevelEnabled: false, curveSegments: 64 });
+  geo.rotateX(-Math.PI / 2);                      // Shape-y -> -z, Extrusion -> +y
+  return geo;
+}
+
+/** Runder Luefter ohne Rahmen: Nabe + geschwungene, nach hinten gesichelte Blaetter. Ebene der Blaetter = y 0. */
+export function gpuFan(D, t, speed = 9, blades = 9) {
+  const g = new THREE.Group();
+  const bm = mat(t.blade ?? 0x2a2d34, { metalness: 0.3, roughness: 0.5 }), hubM = mat(t.hub ?? 0x1a1c21, { metalness: 0.6, roughness: 0.35 });
+  const r0 = D * 0.14, r1 = D * 0.5 - 0.8, N = 14, up = [], lo = [];
+  for (let i = 0; i <= N; i++) {
+    const u = i / N, r = r0 + (r1 - r0) * u;
+    const hw = D * (0.035 + 0.075 * Math.sin(Math.PI * Math.pow(u, 1.6)));     // Blatt: schmal an der Nabe, breit aussen, rund zur Spitze
+    const c = -D * 0.10 * u * u;                                               // Sichelung (Spitzen laufen nach)
+    up.push([r, c + hw]); lo.push([r, c - hw]);
+  }
+  const s = new THREE.Shape();
+  s.moveTo(lo[0][0], lo[0][1]);
+  lo.forEach((p) => s.lineTo(p[0], p[1]));
+  s.lineTo(r1 + D * 0.02, -D * 0.10);                                          // abgerundete Spitze
+  for (let i = up.length - 1; i >= 0; i--) s.lineTo(up[i][0], up[i][1]);
+  s.closePath();
+  const geo = new THREE.ExtrudeGeometry(s, { depth: 0.9, bevelEnabled: false });
+  geo.rotateX(-Math.PI / 2); geo.translate(0, -0.45, 0);                       // flach in der XZ-Ebene
+  const rotor = new THREE.Group(); rotor.userData.spin = speed;
+  for (let i = 0; i < blades; i++) {
+    const p = new THREE.Group(); p.rotation.y = (i * Math.PI * 2) / blades;
+    const b = shadow(new THREE.Mesh(geo, bm)); b.rotation.x = 0.32; p.add(b); rotor.add(p);
+  }
+  rotor.add(cy(D * 0.15, 6, hubM, 0, 0, 0, 40));                                // Nabe
+  rotor.add(cy(D * 0.105, 0.8, mat(0x24262c, { metalness: 0.7, roughness: 0.3 }), 0, 3.3, 0, 40));
+  const hr = new THREE.Mesh(new THREE.TorusGeometry(D * 0.12, 0.45, 8, 40), glow(t.accent, 0.9));
+  hr.rotation.x = Math.PI / 2; hr.position.y = 3.5; rotor.add(hr);
+  g.add(rotor);
+  return g;
+}
+
+/** Komplette Abdeckung einer Mehrluefter-Karte: Platte mit Loechern, geschlossene Waende, Lamellen darunter. */
+export function gpuShroud(g, t, o) {
+  const { L, Wd, T, n, body, metal, tier, conn, plastic, premium, rgb } = o;
+  const wall = 2.6, plateT = 3.2, endM = 8;
+  const pitch = (L - 2 * endM) / n, fanD = Math.min(pitch - 7, Wd - 22), holeR = fanD / 2 + 1.1;
+  const cxs = Array.from({ length: n }, (_, i) => -L / 2 + endM + pitch * (i + 0.5));
+  const finTop = T - plateT - 7.3;                                              // Oberkante Lamellen = Boden des Luefterschachts
+  // Lamellen + dunkler Boden unter den Luefterblaettern
+  const finN = plastic ? 16 : premium ? 48 : 34, hF = finTop - 4;
+  const fm = plastic ? mat(0xa8acb4, { metalness: 0.75, roughness: 0.4 }) : mat(t.metal, { metalness: 0.8, roughness: 0.4 });
+  for (let i = 0; i < finN; i++)
+    g.add(bx(0.7, hF, Wd - 2 * wall - 1, fm, -L / 2 + 14 + i * ((L - 28) / (finN - 1)), 4 + hF / 2, 0));
+  g.add(bx(L - 24, 0.8, Wd - 2 * wall - 1, dark(), 0, finTop - 1.0, 0));
+  if (!plastic && finTop > 26) {                                                // Heatpipes, durch die offene Unterkante sichtbar
+    const cu = mat(0xb87333, { metalness: 0.9, roughness: 0.3 });
+    [10, 18.5].forEach((y) => { const p = cy(3.2, L - 40, cu, 0, y, -Wd / 2 + wall + 7, 16); p.rotation.z = Math.PI / 2; g.add(p); });
+  }
+  // Waende: beide Enden geschlossen, Glasseite (+z) geschlossen mit Ausschnitt fuer die Stromstecker
+  const wy = 3 + (T - 3) / 2, wh = T - 3, zc = Wd / 2 - wall / 2;
+  g.add(rb(wall, wh, Wd, body, 1.2, L / 2 - wall / 2, wy, 0), rb(wall, wh, Wd, body, 1.2, -L / 2 + wall / 2, wy, 0));
+  if (!conn) g.add(rb(L, wh, wall, body, 1.2, 0, wy, zc));
+  else {
+    const xa = L / 2 - 54 - (conn === 2 ? 30 : 0), xb = L / 2 - 26, gy = 18;
+    g.add(rb(xa + L / 2, wh, wall, body, 1.2, (xa - L / 2) / 2, wy, zc),
+          rb(L / 2 - xb, wh, wall, body, 1.2, (xb + L / 2) / 2, wy, zc),
+          rb(xb - xa, T - gy, wall, body, 1.2, (xa + xb) / 2, (gy + T) / 2, zc));
+  }
+  g.add(rb(L, T - finTop, wall, body, 1.2, 0, (T + finTop) / 2, -Wd / 2 + wall / 2));   // Unterkante: nur oberer Rand, darunter sieht man die Lamellen
+  g.add(bx(L - 6, 2, wall, metal, 0, 4, -Wd / 2 + wall / 2));
+  // Deckplatte mit runden Loechern
+  const plate = shadow(new THREE.Mesh(gpuPlate(L, Wd, plateT, cxs, holeR, 1.5), body));
+  plate.position.y = T - plateT; g.add(plate);
+  // Luefter, Leuchtring und Zierring je Loch
+  cxs.forEach((cx) => {
+    const f = gpuFan(fanD, t, 9, tier >= 7 ? 11 : 9); f.position.set(cx, T - 5.5, 0); g.add(f);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(holeR - 0.5, 0.9, 10, 64), rgb ? glow(t.accent, tier >= 7 ? 0.95 : 0.4) : metal);
+    rim.rotation.x = Math.PI / 2; rim.position.set(cx, T - 0.9, 0); g.add(rim);
+    if (!plastic) {
+      const bez = shadow(new THREE.Mesh(new THREE.TorusGeometry(holeR + 1.9, 0.7, 8, 64), metal));
+      bez.rotation.x = Math.PI / 2; bez.position.set(cx, T, 0); g.add(bez);
+    }
+  });
+  if (!plastic) {                                                               // Zierleisten auf der Platte
+    g.add(bx(L - 30, 0.5, 1.6, metal, 0, T + 0.15, Wd / 2 - 5.5), bx(L - 30, 0.5, 1.6, metal, 0, T + 0.15, -Wd / 2 + 5.5));
+  }
 }
 
 function caseDetail(g, t, { W, H, D }) {
@@ -381,7 +466,7 @@ const B = {
     const alu = mat(0xa8acb4, { metalness: 0.75, roughness: 0.4 });
 
     if (n === 1) {
-      // Low-End wie GT1030/GT730: grosser Fan oben, Plastik-Shroud, Alu-Rippen am Ende
+      // Low-End wie GT1030/GT730: grosser runder Fan in Plastik-Shroud, Alu-Rippen am Ende
       const H = Math.max(T - 4, 22);
       g.add(bx(L - 10, 1.4, Wd - 8, mat(t.pcb), 2, 2, 0));
       g.add(bx(L - 20, 0.8, Wd - 16, mat(0x1a1a1e), 0, 0.6, 0));
@@ -389,17 +474,17 @@ const B = {
       g.add(bx(3, 11, 20, dark(), -L / 2 - 2, H * 0.4, -Wd / 2 + 22));
       g.add(bx(2.5, 8, 14, dark(), -L / 2 - 2, H * 0.4, -Wd / 2 + 42));
       g.add(bx(Math.min(70, L * 0.45), 1.4, 5.5, gold(), -L / 2 + 40, 2.2, -Wd / 2 + 4));
-      const shroudL = L * 0.72, shroudW = Wd - 4;
-      g.add(rb(shroudL, H, shroudW, body, 4, -L * 0.05, 2 + H / 2, 0));
+      const shroudL = L * 0.72, shroudW = Wd - 4, sx1 = -L * 0.05, plateT = 3.2, wallH = H - plateT;
       const fSz = Math.min(shroudW - 14, shroudL * 0.55, 85);
-      const f = fan(fSz, t, 7, 7);
-      f.position.set(-L * 0.05, 2 + H + 1, 0);
-      g.add(f);
-      g.add(cy(fSz / 2 + 3, 2, body, -L * 0.05, 2 + H + 0.5, 0, 32));
-      g.add(cy(fSz / 2 + 1, 1.2, dark(), -L * 0.05, 2 + H + 1.5, 0, 32));
+      g.add(rb(shroudL, wallH, 3, body, 1.2, sx1, 2 + wallH / 2, shroudW / 2 - 1.5), rb(shroudL, wallH, 3, body, 1.2, sx1, 2 + wallH / 2, -shroudW / 2 + 1.5),
+            rb(3, wallH, shroudW, body, 1.2, sx1 - shroudL / 2 + 1.5, 2 + wallH / 2, 0), rb(3, wallH, shroudW, body, 1.2, sx1 + shroudL / 2 - 1.5, 2 + wallH / 2, 0));
+      const plate1 = shadow(new THREE.Mesh(gpuPlate(shroudL, shroudW, plateT, [0], fSz / 2 + 1.1, 1.5), body));
+      plate1.position.set(sx1, 2 + wallH, 0); g.add(plate1);
+      g.add(bx(shroudL - 6, 0.8, shroudW - 6, dark(), sx1, 2 + wallH - 7, 0));                  // dunkler Boden unter dem Luefter
+      const f = gpuFan(fSz, t, 7, 7); f.position.set(sx1, 2 + H - 5.5, 0); g.add(f);
       for (let i = 0; i < 4; i++) {
-        g.add(bx(8, H * 0.55, 1.5, dark(), -L * 0.05 + (i - 1.5) * 16, 2 + H / 2, shroudW / 2 - 1));
-        g.add(bx(8, H * 0.55, 1.5, dark(), -L * 0.05 + (i - 1.5) * 16, 2 + H / 2, -shroudW / 2 + 1));
+        g.add(bx(8, H * 0.55, 1.5, dark(), sx1 + (i - 1.5) * 16, 2 + H / 2, shroudW / 2 - 1));
+        g.add(bx(8, H * 0.55, 1.5, dark(), sx1 + (i - 1.5) * 16, 2 + H / 2, -shroudW / 2 + 1));
       }
       const finX0 = L * 0.28;
       for (let i = 0; i < 14; i++) {
@@ -413,37 +498,21 @@ const B = {
       if (c.backplate) g.add(rb(L - 8, 2, Wd, metal, 1, 0, 1, 0));
       else g.add(bx(L - 16, 1, Wd - 10, mat(0x1a1a1e), 0, 0.8, 0));
       g.add(bx(L - 18, 1.5, Wd - 6, mat(t.pcb), 0, 3, 0));
-      const sy = 5 + H / 2;
-      g.add(rb(L, H, 4, body, 1.5, 0, sy, Wd / 2 - 2), rb(L, H, 4, body, 1.5, 0, sy, -Wd / 2 + 2),
-            rb(4, H, Wd, body, 1.5, L / 2 - 2, sy, 0), rb(4, H, Wd, body, 1.5, -L / 2 + 2, sy, 0));
-      const size = Math.min(Wd - 14, (L - 20) / Math.max(n, 1));
-      for (let i = 1; i < n; i++) g.add(bx(3, H, Wd - 8, body, (i - n / 2) * size, sy, 0));
-      if (!c.plastic) {
-        const fins = mat(t.metal, { metalness: 0.8, roughness: 0.4 }), finN = c.premium ? 48 : 34;
-        for (let i = 0; i < finN; i++)
-          g.add(bx(0.7, Math.max(H - 27, 4), Wd - 10, fins, -L / 2 + 12 + i * ((L - 24) / Math.max(finN - 1, 1)), 6 + (H - 27) / 2, 0));
-      }
-      for (let i = 0; i < n; i++) {
-        const f = fan(size - 4, t, 9, tier >= 7 ? 11 : 9);
-        f.position.set((i - (n - 1) / 2) * size, T - 12.5, 0); g.add(f);
-        gpuFanRecess(g, t, (i - (n - 1) / 2) * size, T - 14, size - 4, tier);
-      }
-      const split = Math.max(1, n - 1);
-      for (let i = 0; i < split; i++) {
-        const sx = (i - (split - 1) / 2) * size + size / 2;
-        g.add(bx(2.4, H - 10, 8, metal, sx, sy, 0));
-      }
-      g.add(bx(L - 34, 2.2, 5, metal, 0, T - 1.2, -Wd / 2 + 4));
-      g.add(bx(L - 34, 2.2, 5, metal, 0, T - 1.2, Wd / 2 - 4));
+      // Anzahl sichtbarer Stromstecker (Ausschnitt in der Glasseite)
+      const conn = c.conn ?? (tier >= 5 && c.detail !== false ? 2 : tier >= 4 ? 1 : 0);
+      gpuShroud(g, t, { L, Wd, T, n, body, metal, tier, conn, plastic: c.plastic, premium: c.premium, rgb: c.rgb });
       for (let i = 0; i < (tier <= 5 ? 3 : 4); i++)
         g.add(bx(3, 7, 15, dark(), -L / 2 - 1, T * 0.5, -Wd / 2 + 18 + i * 20));
       if (c.rgb) g.add(bx(L - 40, 1, 1.2, glow(t.accent), 0, T, Wd / 2 - 2));
-      g.add(bx(Math.min(89, L * 0.35), 1.6, 6, gold(), -L / 2 + Math.min(55, L * 0.28), 3, -Wd / 2 + 5));
+      g.add(bx(Math.min(89, L * 0.35), 1.6, 6, gold(), -L / 2 + 11.5 + Math.min(89, L * 0.35) / 2, 3, -Wd / 2 + 5));
       g.add(bx(1.6, T, Wd + 4, metal, -L / 2 - 0.8, T / 2, 0));
-      if (tier >= 4) g.add(bx(22, 9, 12, dark(), L / 2 - 40, 9, Wd / 2 - 8));
+      if (conn >= 1) {
+        g.add(bx(22, 9, 12, dark(), L / 2 - 40, 9, Wd / 2 - 8));
+        g.add(bx(18, 1, 2.2, gold(), L / 2 - 40, 13.7, Wd / 2 - 8));
+      }
       if (c.premium) {
-        g.add(bx(L - 60, 0.6, 0.8, gold(), 0, T - 2, -Wd / 2 + 3));
-        g.add(bx(8, H - 4, 2, glow(t.accent, 1.1), L / 2 - 6, sy, 0));
+        g.add(bx(L - 60, 0.8, 0.5, gold(), 0, T - 3, -Wd / 2 - 0.1));
+        g.add(bx(70, 1.6, 0.5, glow(t.accent, 1.2), -20, T * 0.22, Wd / 2 + 0.3));   // Leuchtstreifen unter dem Logo
       }
       if (c.detail !== false && tier >= 5) gpuDetail(g, t, L, Wd, T, H, gpuLabel);
     }
@@ -557,6 +626,7 @@ const B = {
   },
 };
 
+export const PARTS = B;
 export const KINDS = Object.keys(B);
 
 /** kind: siehe KINDS, variant: Theme, accent: Hex-Farbe, options: Teile-spezifisch (siehe README) */
