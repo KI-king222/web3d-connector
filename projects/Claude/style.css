@@ -1,5 +1,12 @@
 html,body{margin:0;height:100%;overflow:hidden;background:#111;font-family:system-ui,sans-serif}
 canvas{display:block}
-#hud{position:fixed;top:12px;left:12px;color:#fff;background:#0008;padding:6px 10px;border-radius:8px;font-size:14px;z-index:1}
+#hud{position:fixed;top:12px;left:12px;color:#fff;background:#0008;padding:6px 10px;border-radius:8px;font-size:14px;z-index:1;max-width:calc(100vw - 48px)}
 #hud button{margin:2px;padding:6px 10px;border:0;border-radius:6px;background:#2a2a38;color:#fff;font-size:13px}
+#hud button.on{background:#3b6fd4}
 #hud button:active{background:#44445a}
+#syspanel{position:fixed;top:12px;right:12px;width:300px;max-height:calc(100vh - 24px);overflow:auto;color:#fff;background:#000a;padding:10px;border-radius:10px;font-size:13px;z-index:1}
+#syspanel select{display:block;width:100%;margin:0 0 6px;padding:6px;border-radius:6px;border:0;background:#2a2a38;color:#fff;font-size:13px}
+#syspanel label{display:block;margin:4px 0}
+#sysmsg{margin-top:8px}
+#sysmsg .bad{background:#5a1d24;border-radius:6px;padding:5px 7px;margin:3px 0}
+#sysmsg .ok{background:#1d5a33;border-radius:6px;padding:5px 7px}
