@@ -1,1 +1,4 @@
-[]
+[
+ {"type":"part","id":"cpu-1","name":"Axiom Pulse G2","real":"Intel Celeron / Pentium G","category":"cpu","tier":1},
+ {"type":"part","id":"gpu-1","name":"Quanta Lite 1030","real":"NVIDIA GT 1030","category":"gpu","tier":1}
+]
