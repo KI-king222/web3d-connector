@@ -80,8 +80,19 @@ async function ghPull({ project, repo, branch = "main", subdir = "" }) {
   return n;
 }
 /** Ordner im Repo, die ein Projekt enthalten (index.html). under = nur unterhalb dieses Ordners. */
-async function ghList(repo, branch = "main", under = "") {
+async function ghList(repo, branch = "main", under = "", mode = "projects") {
   const prefix = cleanSub(under), t = await ghApi(repo, `git/trees/${branch}?recursive=1`);
+  if (mode === "all") {
+    const dirs = new Set();
+    for (const x of t.tree) {
+      if (!x.path.startsWith(prefix)) continue;
+      const rel = x.path.slice(prefix.length);
+      if (!rel) continue;
+      const top = rel.split("/")[0];
+      if (x.type === "tree" || rel.includes("/")) dirs.add(top);
+    }
+    return [...dirs].sort().map((name) => ({ path: prefix + name, name: String(name).replace(/[^\w-]/g, "_") }));
+  }
   return t.tree
     .filter((x) => x.type === "blob" && x.path.startsWith(prefix) && (x.path === "index.html" || x.path.endsWith("/index.html")))
     .map((x) => {
@@ -389,9 +400,19 @@ function buildServer() {
     { project: z.string().regex(/^[\w-]+$/), repo: z.string().regex(/^[\w.-]+\/[\w.-]+$/), branch: z.string().default("main"), subdir: z.string().regex(/^[\w\-./]*$/).default("") },
     async (a) => { try { return ok(`${await ghPull(a)} Dateien nach ${a.project}/ geladen.`); } catch (e) { return err(e); } });
 
-  s.tool("github_list", "Listet alle Ordner eines GitHub-Repos, die ein Projekt enthalten (index.html), als JSON [{name, path}].",
-    { repo: z.string().regex(/^[\w.-]+\/[\w.-]+$/), branch: z.string().default("main"), under: z.string().regex(/^[\w\-./]*$/).default("") },
-    async ({ repo, branch, under }) => { try { return ok(JSON.stringify(await ghList(repo, branch, under))); } catch (e) { return err(e); } });
+  s.tool("github_list", "Listet Ordner eines GitHub-Repos. mode=projects: nur mit index.html; mode=all: alle Top-Ordner.",
+    { repo: z.string().regex(/^[\w.-]+\/[\w.-]+$/), branch: z.string().default("main"), under: z.string().regex(/^[\w\-./]*$/).default(""), mode: z.enum(["projects", "all"]).default("projects") },
+    async ({ repo, branch, under, mode }) => { try { return ok(JSON.stringify(await ghList(repo, branch, under, mode))); } catch (e) { return err(e); } });
+
+  s.tool("import_repo", "Laedt ein KOMPLETTES GitHub-Repo in den Workspace (z.B. HASHPOOL = KI-king222/Bitcoin-Clicker). Andere KIs koennen dann alle Dateien per list_files/read_file/write_file bearbeiten und mit github_push zurueckschreiben.",
+    { project: z.string().regex(/^[\w-]+$/).describe("Name im Workspace, z.B. hashpool"), repo: z.string().regex(/^[\w.-]+\/[\w.-]+$/).describe("z.B. KI-king222/Bitcoin-Clicker"), branch: z.string().default("main"), subdir: z.string().regex(/^[\w\-./]*$/).default("").describe("leer = ganzes Repo") },
+    async (a) => {
+      try {
+        await fs.mkdir(safe(a.project), { recursive: true });
+        const n = await ghPull(a);
+        return ok(`${n} Dateien aus ${a.repo} → workspace/${a.project}/. Andere KIs: list_files({project:"${a.project}"}), read_file/write_file mit Pfad "${a.project}/…", github_push zurück ins Repo.`);
+      } catch (e) { return err(e); }
+    });
 
   s.tool("delete_project", "Loescht ein Projekt auf dem Server (und aus dem Sicherungs-Repo, falls STATE_REPO gesetzt ist).",
     { project: z.string().regex(/^[\w-]+$/) },
@@ -519,7 +540,24 @@ app.post("/mcp", (req, res) => (TOKEN && req.get("authorization") === `Bearer ${
 app.post("/mcp/:token", (req, res) => (TOKEN && req.params.token === TOKEN ? mcp(req, res) : res.sendStatus(401)));
 app.get(["/mcp", "/mcp/:token"], (_, res) => res.status(405).json({ jsonrpc: "2.0", error: { code: -32000, message: "Method not allowed" }, id: null }));
 
-app.listen(PORT, () => {
+
+// HASHPOOL (Bitcoin-Clicker) automatisch in den Workspace spiegeln, damit MCP/andere KIs alle Dateien sehen.
+// Abschalten: MIRROR_REPO=off  | anderes Repo: MIRROR_REPO=owner/name  MIRROR_PROJECT=name
+async function mirrorFullRepo() {
+  if (!process.env.GITHUB_TOKEN) return;
+  if (process.env.MIRROR_REPO === "off") return;
+  const repo = process.env.MIRROR_REPO || "KI-king222/Bitcoin-Clicker";
+  const project = (process.env.MIRROR_PROJECT || "hashpool").replace(/[^\w-]/g, "-");
+  try {
+    console.log(`Spiegel ${repo} → workspace/${project}/ …`);
+    await fs.mkdir(safe(project), { recursive: true });
+    const n = await ghPull({ project, repo, branch: process.env.MIRROR_BRANCH || "main", subdir: process.env.MIRROR_SUBDIR || "" });
+    console.log(`Spiegel fertig: ${n} Dateien in ${project}/`);
+  } catch (e) { console.warn("Repo-Spiegel fehlgeschlagen:", e.message); }
+}
+
+app.listen(PORT, "0.0.0.0", () => {
+  mirrorFullRepo();
   console.log(`MCP: http://localhost:${PORT}/mcp | Vorschau: /preview/<projekt>/`);
   console.log(`HASHPOOL-Showcases geladen: ${seededShowcases}`);
   restoreAll(); // holt gesicherte Projekte zurueck (nur wenn STATE_REPO gesetzt ist)
