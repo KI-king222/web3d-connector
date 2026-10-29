@@ -118,13 +118,24 @@ nav button span{font-size:20px;line-height:1}nav button.on{background:var(--card
     <div class="row" style="margin-top:12px"><button id="push">Push → GitHub</button></div>
   </div>
   <div class="card">
+    <h2>HASHPOOL-REPO FÜR KI</h2>
+    <p class="meta" style="margin:0 0 8px"><b>Brücke:</b> Änderungen in <code>hashpool</code> werden ins Spiel-Repo gepusht; alle ~2 Min kommt der Spiel-Stand zurück.</p>
+    <p class="meta" style="margin:0 0 8px">Lädt das <b>komplette HASHPOOL-Spiel</b> (Bitcoin-Clicker) in den Workspace. Andere KIs können dann alle Dateien lesen und bearbeiten.</p>
+    <label>Repo</label>
+    <input id="mirrorRepo" value="KI-king222/Bitcoin-Clicker" autocapitalize="off">
+    <label style="margin-top:8px">Name im Workspace</label>
+    <input id="mirrorProject" value="hashpool" autocapitalize="off">
+    <div class="row" style="margin-top:12px"><button id="importRepo">Ganzes HASHPOOL laden</button></div>
+    <p class="meta" style="margin:8px 0 0">Danach z. B. <code>hashpool/index.html</code>, <code>hashpool/js/parts3d/…</code>. Zurück ins Spiel-Repo: Push mit Repo <code>KI-king222/Bitcoin-Clicker</code> und passendem Unterordner.</p>
+  </div>
+  <div class="card">
     <h2>NACH HASHPOOL SENDEN</h2>
     <p class="meta" style="margin:0 0 8px">Ein Klick: relevante 3D-Dateien ins Spiel-Repo (kein manuelles Kopieren).</p>
     <label>Projekt</label>
     <select id="hpProject"></select>
     <label style="margin-top:8px">Zielordner im Spiel</label>
     <input id="hpSubdir" value="js/parts3d/web3d-import" autocapitalize="off">
-    <p class="meta" style="margin:8px 0 0">Landet unter <code>js/parts3d/web3d-import/<projekt>/</code> – bestehende Spiel-Dateien werden nicht überschrieben.</p>
+    <p class="meta" style="margin:8px 0 0">Landet unter <code>js/parts3d/web3d-import/&lt;projekt&gt;/</code> – bestehende Spiel-Dateien werden nicht überschrieben.</p>
     <div class="meta" style="margin-top:10px;line-height:1.45">
       Gesendet werden u. a.: <code>components.js</code>, <code>entities.json</code>, <code>parts-*.js</code>, <code>assemble.js</code> – nicht die Viewer-Hülle.
     </div>
@@ -344,6 +355,15 @@ $("#pushHp").onclick = (e) => run(e.target, async () => {
   }
   return r;
 });
+
+$("#importRepo").onclick = (e) => run(e.target, async () => {
+  const repo = ($("#mirrorRepo").value || "").trim() || "KI-king222/Bitcoin-Clicker";
+  const project = ($("#mirrorProject").value || "").trim() || "hashpool";
+  const r = await tool("import_repo", { project, repo, branch: $("#branch").value.trim() || "main", subdir: "" });
+  await loadProjects();
+  return r;
+});
+
 function fillPushProjects() {
   for (const id of ["pushProject", "hpProject"]) {
     const sel = $("#" + id); if (!sel) continue;
@@ -360,12 +380,18 @@ function fillPushProjects() {
 async function loadStatus() {
   try {
     const s = await api("/api/status"), pill = $("#pill"), box = $("#state");
-    pill.className = "pill " + (s.stateOn ? (s.lastError ? "bad" : "ok") : "");
-    pill.textContent = !s.stateOn ? "Sicherung aus" : s.restoring ? "stellt wieder her…" : s.lastError ? "Sicherung: Fehler" : s.lastBackup ? "gesichert" : "Sicherung an";
+    const br = s.bridge || {};
+    const bridgeOk = br.enabled && !br.lastError;
+    pill.className = "pill " + ((s.stateOn || br.enabled) ? ((s.lastError || br.lastError) ? "bad" : "ok") : "");
+    if (br.enabled) pill.textContent = br.lastError ? "Brücke: Fehler" : "Brücke an";
+    else pill.textContent = !s.stateOn ? "Sicherung aus" : s.restoring ? "stellt wieder her…" : s.lastError ? "Sicherung: Fehler" : s.lastBackup ? "gesichert" : "Sicherung an";
     box.innerHTML = "";
     if (!s.githubToken) box.append(el("pre", { className: "err", textContent: "GITHUB_TOKEN fehlt auf dem Server." }));
-    if (!s.stateOn) box.append(el("pre", { textContent: "Aus. Setze bei Render die Variable STATE_REPO (z. B. KI-king222/web3d-connector). Dann wird jedes Projekt automatisch gesichert und nach Neustart zurückgeholt." }));
-    else box.append(el("pre", { textContent: `Repo: ${s.stateRepo}\nOffen: ${s.pending} · Wiederhergestellt: ${s.restored}${s.lastError ? "\nFehler: " + s.lastError : ""}` }));
+    if (br.enabled) {
+      box.append(el("pre", { textContent: `Brücke: ${br.project || "hashpool"} ↔ ${br.repo || "Bitcoin-Clicker"}\nPush (Web3D→Spiel): ${br.lastPush || "noch keiner"}\nPull (Spiel→Web3D): ${br.lastPull || "noch keiner"}${br.lastError ? "\nFehler: " + br.lastError : ""}` }));
+    }
+    if (!s.stateOn) box.append(el("pre", { textContent: "Sicherung: Aus. Optional STATE_REPO setzen für Extra-Backup." }));
+    else box.append(el("pre", { textContent: `Sicherung: ${s.stateRepo}\nOffen: ${s.pending} · Wiederhergestellt: ${s.restored}${s.lastError ? "\nFehler: " + s.lastError : ""}` }));
   } catch (e) { $("#pill").textContent = "Status?"; }
 }
 $("#backup").onclick = (e) => run(e.target, async () => { const r = await api("/api/backup", {}); await loadStatus(); return { content: [{ type: "text", text: `${r.projects} Projekte gesichert.${r.error ? "\nFehler: " + r.error : ""}` }] }; });
