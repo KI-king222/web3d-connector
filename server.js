@@ -122,9 +122,29 @@ const stateOn = () => Boolean(STATE_REPO && process.env.GITHUB_TOKEN);
 const status = { restoring: false, restored: 0, lastBackup: null, lastError: null };
 const dirty = new Set();
 let backupTimer;
+// ---- Zwei-Wege-Brücke Web3D ↔ HASHPOOL (Bitcoin-Clicker) ----
+// Web3D ändert → nach kurzer Pause Push nach BRIDGE_REPO
+// HASHPOOL ändert → periodischer Pull in workspace/BRIDGE_PROJECT
+// Aus: BRIDGE=off
+const BRIDGE_OFF = () => process.env.BRIDGE === "off" || process.env.MIRROR_REPO === "off";
+const bridgeRepo = () => process.env.BRIDGE_REPO || process.env.MIRROR_REPO || "KI-king222/Bitcoin-Clicker";
+const bridgeProject = () => (process.env.BRIDGE_PROJECT || process.env.MIRROR_PROJECT || "hashpool").replace(/[^\w-]/g, "-");
+const bridgePushMs = () => Math.max(3000, Number(process.env.BRIDGE_PUSH_MS || 8000));
+const bridgePullMs = () => Math.max(30000, Number(process.env.BRIDGE_PULL_MS || 120000));
+let bridgeTimer, bridgePullTimer, bridgeBusy = false, lastBridgePush = 0, lastBridgePull = 0;
+const statusBridge = { lastPush: null, lastPull: null, lastError: null, enabled: true };
+
 const markDirty = (p) => {
-  if (!stateOn() || !p || !/^[\w-]+$/.test(p)) return;
-  dirty.add(p); clearTimeout(backupTimer); backupTimer = setTimeout(flushBackup, 15000);
+  if (!p || !/^[\w-]+$/.test(p)) return;
+  if (stateOn()) {
+    dirty.add(p);
+    clearTimeout(backupTimer);
+    backupTimer = setTimeout(flushBackup, 15000);
+  }
+  if (!BRIDGE_OFF() && process.env.GITHUB_TOKEN && p === bridgeProject()) {
+    clearTimeout(bridgeTimer);
+    bridgeTimer = setTimeout(flushBridgePush, bridgePushMs());
+  }
 };
 async function flushBackup() {
   const list = [...dirty]; dirty.clear();
@@ -135,6 +155,63 @@ async function flushBackup() {
       status.lastBackup = new Date().toISOString(); status.lastError = null;
     } catch (e) { status.lastError = `${p}: ${e.message}`; console.warn("Backup fehlgeschlagen:", status.lastError); }
   }
+}
+/** Web3D → HASHPOOL: geänderte Dateien ins Spiel-Repo pushen */
+async function flushBridgePush() {
+  if (BRIDGE_OFF() || !process.env.GITHUB_TOKEN || bridgeBusy) return;
+  const project = bridgeProject(), repo = bridgeRepo();
+  bridgeBusy = true;
+  try {
+    await fs.access(safe(project));
+    const r = await ghPush({
+      project,
+      repo,
+      branch: process.env.BRIDGE_BRANCH || "main",
+      message: `Web3D-Brücke → ${project}`,
+      subdir: process.env.BRIDGE_SUBDIR || "",
+    });
+    lastBridgePush = Date.now();
+    statusBridge.lastPush = new Date().toISOString();
+    statusBridge.lastError = null;
+    console.log(`Brücke Push: ${r.count} Dateien → ${repo} ${r.url}`);
+  } catch (e) {
+    statusBridge.lastError = `push: ${e.message}`;
+    console.warn("Brücke Push fehlgeschlagen:", e.message);
+  } finally {
+    bridgeBusy = false;
+  }
+}
+/** HASHPOOL → Web3D: Spiel-Repo in Workspace ziehen (überspringt direkt nach eigenem Push) */
+async function flushBridgePull(force = false) {
+  if (BRIDGE_OFF() || !process.env.GITHUB_TOKEN || bridgeBusy) return;
+  if (!force && lastBridgePush && Date.now() - lastBridgePush < bridgePushMs() + 5000) return;
+  const project = bridgeProject(), repo = bridgeRepo();
+  bridgeBusy = true;
+  try {
+    await fs.mkdir(safe(project), { recursive: true });
+    const n = await ghPull({
+      project,
+      repo,
+      branch: process.env.BRIDGE_BRANCH || "main",
+      subdir: process.env.BRIDGE_SUBDIR || "",
+    });
+    lastBridgePull = Date.now();
+    statusBridge.lastPull = new Date().toISOString();
+    statusBridge.lastError = null;
+    console.log(`Brücke Pull: ${n} Dateien ← ${repo}`);
+  } catch (e) {
+    statusBridge.lastError = `pull: ${e.message}`;
+    console.warn("Brücke Pull fehlgeschlagen:", e.message);
+  } finally {
+    bridgeBusy = false;
+  }
+}
+function startBridgeLoop() {
+  statusBridge.enabled = !BRIDGE_OFF() && Boolean(process.env.GITHUB_TOKEN);
+  if (!statusBridge.enabled) return;
+  clearInterval(bridgePullTimer);
+  bridgePullTimer = setInterval(() => flushBridgePull(false), bridgePullMs());
+  console.log(`Brücke aktiv: ${bridgeProject()} ↔ ${bridgeRepo()} (Push debounce ${bridgePushMs()}ms, Pull alle ${bridgePullMs()}ms)`);
 }
 async function restoreAll(force = false) {
   if (!stateOn()) return 0;
@@ -255,7 +332,7 @@ renderer.setAnimationLoop(() => {
 // ---------- MCP-Server ----------
 function buildServer() {
   const s = new McpServer({ name: "web3d-game-connector", version: "1.0.0" });
-  const MUTATING = new Set(["scaffold_game", "write_file", "add_entity", "add_pc_component", "remove_entity"]);
+  const MUTATING = new Set(["scaffold_game", "write_file", "add_entity", "add_pc_component", "remove_entity", "import_repo"]);
   const _tool = s.tool.bind(s);
   s.tool = (name, desc, schema, handler) => _tool(name, desc, schema, async (args, extra) => {
     const r = await handler(args, extra);
@@ -510,6 +587,7 @@ app.get("/api/projects", auth, async (_, res) => {
 });
 app.get("/api/status", auth, (_, res) => res.json({
   stateRepo: STATE_REPO || null, stateOn: stateOn(), githubToken: Boolean(process.env.GITHUB_TOKEN), pending: dirty.size, ...status,
+  bridge: { enabled: statusBridge.enabled, repo: bridgeRepo(), project: bridgeProject(), ...statusBridge },
 }));
 app.post("/api/backup", auth, async (_, res) => {
   if (!stateOn()) return res.status(400).json({ error: "STATE_REPO oder GITHUB_TOKEN fehlt auf dem Server." });
@@ -557,7 +635,7 @@ async function mirrorFullRepo() {
 }
 
 app.listen(PORT, "0.0.0.0", () => {
-  mirrorFullRepo();
+  mirrorFullRepo().then(() => startBridgeLoop());
   console.log(`MCP: http://localhost:${PORT}/mcp | Vorschau: /preview/<projekt>/`);
   console.log(`HASHPOOL-Showcases geladen: ${seededShowcases}`);
   restoreAll(); // holt gesicherte Projekte zurueck (nur wenn STATE_REPO gesetzt ist)
