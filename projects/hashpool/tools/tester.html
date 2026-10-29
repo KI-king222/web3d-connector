@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HASHPOOL — Bot Tester</title>
+<style>
+  :root {
+    --bg:#0b0d10; --panel:#12151a; --line:#242a32;
+    --text:#e7e9ec; --muted:#7c8794; --btc:#f7931a; --green:#2fd98a; --red:#ff5c5c;
+    font-family: ui-monospace, "JetBrains Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); padding:16px; }
+  h1 { font-size:16px; margin:0 0 8px; }
+  h1 span { color:var(--btc); }
+  p { color:var(--muted); font-size:12px; line-height:1.45; max-width:720px; }
+  .row { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; }
+  button {
+    font-family:inherit; font-weight:700; font-size:13px; cursor:pointer;
+    border:1px solid var(--line); border-radius:8px; padding:10px 14px;
+    background:var(--panel); color:var(--text);
+  }
+  button.primary { background:var(--btc); color:#1a1206; border-color:var(--btc); }
+  button:disabled { opacity:.45; cursor:default; }
+  #status { font-size:12px; color:var(--muted); margin-bottom:8px; }
+  #status.ready { color:var(--green); }
+  #status.bad { color:var(--red); }
+  #out {
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:12px; font-size:12px; white-space:pre-wrap; min-height:120px;
+    max-height:45vh; overflow:auto;
+  }
+  .ok { color:var(--green); }
+  .bad { color:var(--red); }
+  iframe {
+    width:100%; height:50vh; border:1px solid var(--line); border-radius:10px;
+    background:#000; margin-top:12px;
+  }
+  code { color:var(--btc); }
+</style>
+</head>
+<body>
+  <h1><span>HASHPOOL</span> Bot Tester</h1>
+  <p>
+    Skript-Bot über <code>window.HASHPOOL</code> (keine echte KI).
+    Spiel liegt eine Ebene höher: <code>../index.html</code>
+  </p>
+  <p>Alternativ: <code>../index.html?bot=1</code></p>
+  <div id="status">Frame wird geladen…</div>
+  <div class="row">
+    <button class="primary" id="run" type="button" disabled>Bot starten</button>
+    <button id="reload" type="button">Spiel neu laden</button>
+    <button id="boturl" type="button">Öffne ?bot=1 im Frame</button>
+  </div>
+  <div id="out">Noch kein Lauf.</div>
+  <iframe id="game" title="Hashpool" src="../index.html"></iframe>
+<script>
+(function(){
+  var out = document.getElementById("out");
+  var status = document.getElementById("status");
+  var frame = document.getElementById("game");
+  var runBtn = document.getElementById("run");
+  var pollTimer = null;
+
+  function log(msg, cls){
+    var line = document.createElement("div");
+    if(cls) line.className = cls;
+    line.textContent = msg;
+    out.appendChild(line);
+    out.scrollTop = out.scrollHeight;
+  }
+  function clearOut(){ out.innerHTML = ""; }
+
+  function getApi(){
+    try {
+      var w = frame.contentWindow;
+      if(w && w.HASHPOOL && typeof w.HASHPOOL.runBot === "function") return w.HASHPOOL;
+    } catch(e) {}
+    return null;
+  }
+
+  function setStatus(text, kind){
+    status.textContent = text;
+    status.className = kind || "";
+  }
+
+  function stopPoll(){
+    if(pollTimer){ clearInterval(pollTimer); pollTimer = null; }
+  }
+
+  function startPoll(){
+    stopPoll();
+    runBtn.disabled = true;
+    setStatus("Warte auf HASHPOOL-API im Spiel…");
+    var tries = 0;
+    pollTimer = setInterval(function(){
+      tries++;
+      var api = getApi();
+      if(api){
+        stopPoll();
+        runBtn.disabled = false;
+        setStatus("API bereit (v" + (api.version || "?") + ") — Bot starten drücken.", "ready");
+        return;
+      }
+      setStatus("Warte auf API… Versuch " + tries + "/40");
+      if(tries >= 40){
+        stopPoll();
+        setStatus("API nicht gefunden.", "bad");
+        log("index.html muss window.HASHPOOL enthalten.", "bad");
+      }
+    }, 500);
+  }
+
+  document.getElementById("reload").onclick = function(){
+    clearOut();
+    stopPoll();
+    runBtn.disabled = true;
+    frame.src = "../index.html?t=" + Date.now();
+  };
+
+  document.getElementById("boturl").onclick = function(){
+    clearOut();
+    stopPoll();
+    runBtn.disabled = true;
+    frame.src = "../index.html?bot=1&t=" + Date.now();
+    startPoll();
+  };
+
+  runBtn.onclick = function(){
+    clearOut();
+    var hp = getApi();
+    if(!hp){ log("API noch nicht da.", "bad"); startPoll(); return; }
+    runBtn.disabled = true;
+    log("Bot läuft…");
+    try {
+      var report = hp.runBot({ maxMs: 7000, reset: true });
+      log(report.summary, report.ok ? "ok" : "bad");
+      log("Spaß-Schätzung: " + report.funEstimate + "/10");
+      log(JSON.stringify(report, null, 2));
+    } catch(err){
+      log("Bot-Fehler: " + err, "bad");
+    }
+    runBtn.disabled = false;
+  };
+
+  frame.addEventListener("load", startPoll);
+  startPoll();
+})();
+</script>
+</body>
+</html>

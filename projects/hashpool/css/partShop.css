@@ -1,0 +1,159 @@
+/* partShop.css — shelves + brand chips + accordion picker */
+.ps-open-btn{
+  width:100%; margin:10px 0 8px; padding:16px 18px;
+  background:linear-gradient(180deg,#3d4a5c,#1e2633);
+  border:1px solid #5a6a80; border-radius:14px;
+  color:#e7e9ec; font-family:inherit; font-weight:800; font-size:16px;
+  cursor:pointer; min-height:52px;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.ps-open-btn:hover{ border-color:#78d505; color:#caff88; }
+.ps-open-btn:active{ transform:scale(0.98); }
+.ps-overlay{
+  position:fixed; inset:0; z-index:9000; display:none;
+  flex-direction:column; background:#0b0d10;
+}
+.ps-overlay.open{ display:flex; }
+.ps-top{
+  display:flex; align-items:center; gap:10px;
+  padding:12px 14px; border-bottom:1px solid #1e2633;
+  background:#0f131a; flex-shrink:0;
+}
+.ps-top h2{ flex:1; margin:0; font-size:16px; font-weight:800; }
+.ps-back,.ps-close{
+  background:#1a222e; border:1px solid #2a3344; color:#e7e9ec;
+  border-radius:10px; width:40px; height:40px; font-size:18px; cursor:pointer;
+}
+.ps-sats{ font-size:13px; color:#78d505; font-weight:700; white-space:nowrap; }
+.ps-body{ flex:1; overflow:auto; padding:16px 14px 40px; -webkit-overflow-scrolling:touch; }
+.ps-inv-hint{ max-width:720px; margin:0 auto 14px; color:#8b95a5; font-size:13px; line-height:1.45; }
+.ps-shelves{
+  max-width:720px; margin:0 auto; display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:14px;
+  perspective:900px;
+}
+.ps-shelf{
+  background:linear-gradient(180deg,#1a222e 0%,#121820 70%,#0c1016 100%);
+  border:1px solid #2a3344; border-radius:14px; padding:18px 12px 14px;
+  text-align:center; cursor:pointer;
+  transform:rotateX(6deg); transform-style:preserve-3d;
+  box-shadow:0 10px 0 #0a0c10, 0 14px 24px rgba(0,0,0,0.45);
+  transition:transform 0.15s ease, border-color 0.15s;
+}
+.ps-shelf:hover,.ps-shelf:active{
+  border-color:#78d505; transform:rotateX(2deg) translateY(-2px);
+}
+.ps-shelf-icon{ font-size:28px; display:block; margin-bottom:8px; }
+.ps-shelf-name{ font-weight:800; font-size:14px; }
+.ps-shelf-count{ font-size:11px; color:#8b95a5; margin-top:6px; }
+.ps-list-wrap{ max-width:720px; margin:0 auto; }
+.ps-list-title{ font-weight:800; margin-bottom:10px; font-size:15px; }
+.ps-row{
+  display:flex; align-items:center; gap:12px;
+  padding:12px; margin-bottom:8px;
+  background:#121820; border:1px solid #1e2633; border-radius:12px; cursor:pointer;
+  width:100%; text-align:left; color:inherit; font-family:inherit;
+}
+.ps-row.selected, .ps-row.on{ border-color:#78d505; background:#14200a; }
+.ps-row.ps-muted{ color:#5a6575; cursor:default; }
+.ps-row-icon{
+  width:48px; height:48px; border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:10px; font-weight:800; line-height:1.15; text-align:center;
+  flex-shrink:0;
+}
+.ps-chip{
+  display:inline-flex; align-items:center; justify-content:center;
+  padding:8px 10px; border-radius:10px; min-width:52px;
+  font-size:11px; font-weight:800; line-height:1.15; text-align:center;
+  flex-shrink:0;
+}
+.ps-chip-blue{ background:#0a1f3d; color:#6eb6ff; }
+.ps-chip-red{ background:#3a0a0a; color:#ff7b7b; }
+.ps-chip-teal{ background:#0a2a28; color:#4fd1c5; }
+.ps-chip-purple{ background:#1a0a2e; color:#c4b5fd; }
+.ps-chip-gray{ background:#1e2633; color:#c0c6d0; }
+.ps-chip-intel{ background:#003366; color:#7eb8ff; }
+.ps-chip-amd{ background:#4a0000; color:#ff6b6b; }
+.ps-chip-nvidia{ background:#1a3d00; color:#76b900; }
+.ps-chip-corsair{ background:#1a1a2e; color:#a0a0ff; }
+.ps-chip-samsung{ background:#0a1a2e; color:#6bb3ff; }
+.ps-chip-kingston{ background:#1a1020; color:#d0a0ff; }
+.ps-chip-noctua{ background:#2a1a0a; color:#e8b060; }
+.ps-chip-asus{ background:#0a1a1a; color:#00d4aa; }
+.ps-chip-msi{ background:#1a0a0a; color:#ff4444; }
+.ps-chip-gigabyte{ background:#0a1a12; color:#40c070; }
+.ps-chip-seasonic{ background:#1a1a0a; color:#e0d060; }
+.ps-chip-bequiet{ background:#121212; color:#aaa; }
+.ps-chip-default{ background:#1e2633; color:#c0c6d0; }
+.ps-chip-tier-hi{ box-shadow:0 0 0 1px #f7931a; }
+.ps-chip-tier-mid{ box-shadow:0 0 0 1px #3b82f6; }
+.ps-row-main{ flex:1; min-width:0; }
+.ps-row-brand{ font-size:11px; color:#8b95a5; }
+.ps-row-model{ font-weight:700; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#e7e9ec; }
+.ps-row-tier{ font-size:11px; color:#8b95a5; margin-top:2px; }
+.ps-row-owned{ color:#78d505; font-weight:700; }
+.ps-row-price{ font-weight:800; color:#78d505; font-size:13px; flex-shrink:0; }
+.ps-row-meta{ margin-left:auto; font-size:12px; color:#8b95a5; font-weight:600; white-space:nowrap; }
+.ps-detail{
+  max-width:720px; margin:0 auto 12px; padding:14px;
+  background:#0f131a; border:1px solid #2a3344; border-radius:12px;
+  display:none;
+}
+.ps-detail.open{ display:block; animation:psIn 0.2s ease; }
+@keyframes psIn{ from{ opacity:0; transform:translateY(-6px);} to{ opacity:1; transform:none;} }
+.ps-detail-name{ font-weight:800; font-size:15px; margin-bottom:4px; }
+.ps-detail-brand{ font-size:12px; color:#8b95a5; margin-bottom:12px; }
+.ps-scale{ margin-bottom:10px; }
+.ps-scale-label{ display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px; color:#c0c6d0; }
+.ps-scale-bar{ height:10px; border-radius:5px; background:#1e2633; overflow:hidden; }
+.ps-scale-fill{ height:100%; border-radius:5px; background:linear-gradient(90deg,#3b82f6,#22d3ee); }
+.ps-scale-fill.eff{ background:linear-gradient(90deg,#22c55e,#84cc16); }
+.ps-scale-fill.val{ background:linear-gradient(90deg,#f59e0b,#f7931a); }
+.ps-detail-actions{ display:flex; gap:10px; align-items:center; margin-top:14px; }
+.ps-price-big{ flex:1; font-size:16px; font-weight:800; color:#78d505; }
+.ps-buy-btn{
+  background:linear-gradient(180deg,#caff88,#78d505);
+  color:#0f2000; border:none; border-radius:10px;
+  font-family:inherit; font-weight:800; font-size:14px; padding:12px 20px; cursor:pointer;
+}
+.ps-buy-btn:disabled{ background:#1e2633; color:#5a6575; cursor:default; }
+.ps-toast{
+  position:fixed; left:50%; bottom:24px; transform:translateX(-50%);
+  background:#14200a; border:1px solid #78d505; color:#caff88;
+  padding:12px 18px; border-radius:12px; font-weight:700; font-size:13px;
+  z-index:9500; display:none; max-width:90%; text-align:center;
+  box-shadow:0 8px 24px rgba(0,0,0,0.5);
+}
+.ps-toast.show{ display:block; animation: psIn 0.2s ease; }
+.ps-floor{
+  max-width:720px; margin:20px auto 0; height:14px; border-radius:4px;
+  background:linear-gradient(180deg,#2a2218,#1a1510);
+  box-shadow:0 8px 20px rgba(0,0,0,0.5); opacity:0.85;
+}
+.ps-acc{
+  max-width:720px; margin:0 auto 10px;
+  border:1px solid #2a3344; border-radius:12px;
+  background:#121820; overflow:hidden;
+}
+.ps-acc.has-pick{ border-color:#3d5a20; }
+.ps-acc.open{ border-color:#4a5568; }
+.ps-acc-head{
+  width:100%; display:flex; align-items:center; gap:10px;
+  padding:14px 14px; background:transparent; border:none;
+  color:#e7e9ec; font-family:inherit; font-size:14px; cursor:pointer; text-align:left;
+}
+.ps-acc-head:hover{ background:#1a222e; }
+.ps-acc-left{ flex:0 0 auto; }
+.ps-acc-mid{
+  flex:1; font-size:12px; color:#8b95a5; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.ps-acc.has-pick .ps-acc-mid{ color:#78d505; font-weight:600; }
+.ps-acc-arrow{ flex:0 0 22px; text-align:center; color:#8b95a5; font-size:16px; }
+.ps-acc-body{ padding:0 10px 12px; border-top:1px solid #1e2633; animation: psIn 0.15s ease; }
+.ps-scales{ max-width:720px; margin:12px auto 0; padding:12px; background:#121820; border:1px solid #1e2633; border-radius:12px; }
+.ps-scales .ps-scale{ display:flex; align-items:center; gap:10px; margin-bottom:8px; font-size:12px; }
+.ps-scales .ps-scale span{ width:72px; color:#8b95a5; }
+.ps-scales .ps-scale-bar{ flex:1; height:8px; background:#1e2633; border-radius:4px; overflow:hidden; }
+.ps-scales .ps-scale-bar i{ display:block; height:100%; background:linear-gradient(90deg,#3b82f6,#22d3ee); border-radius:4px; }
+.ps-scales .ps-scale b{ width:36px; text-align:right; color:#c0c6d0; }

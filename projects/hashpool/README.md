@@ -1,15 +1,51 @@
-# HASHPOOL im Web3D-Workspace
+# HASHPOOL — Bitcoin Clicker
 
-Dieses Projekt wird beim Server-Start aus **KI-king222/Bitcoin-Clicker** gespiegelt (`workspace/hashpool/`).
+Live: **https://ki-king222.github.io/Bitcoin-Clicker/**
 
-## Andere KIs (MCP)
+---
 
-- `list_files` mit `project: "hashpool"`
-- `read_file` / `write_file` z.B. `hashpool/js/parts3d/gpu.js`
-- Zurück ins Spiel: `github_push` mit `repo: "KI-king222/Bitcoin-Clicker"`
+## Struktur (nach Funktion benannt)
 
-## Server
+```
+Bitcoin-Clicker/
+├── index.html              ← HTML-Gerüst (lädt CSS + JS)
+├── css/
+│   ├── base.css            ← Variablen, Layout, Header
+│   ├── account.css         ← Login, Account, Halving
+│   ├── build.css           ← PC-Werkstatt, 3D-Case
+│   ├── shop.css            ← Balance, Mine-Button, Shop
+│   ├── modals.css          ← Dialoge, Toasts
+│   └── minigames.css       ← Paste- & BIOS-Minispiele
+├── js/
+│   ├── data-*.js           ← Upgrades, Teile, State, Texte
+│   ├── account-*.js        ← Login, Register, Snapshots
+│   ├── build3d-*.js        ← Three.js Bauteile & Szene
+│   ├── ui.js               ← Sprache, Dialoge
+│   ├── audio.js            ← Sounds
+│   ├── save-*.js           ← Speichern, Kosten, Format
+│   ├── render-shop-*.js    ← Shop-Anzeige
+│   ├── build-*.js          ← Werkstatt Drag&Drop
+│   ├── minigames-*.js      ← Paste, BIOS, Boot
+│   ├── shop.js             ← Kauf + Tick/Events
+│   ├── main-*.js           ← weitere Events
+│   └── expansion-*.js      ← Farm, Markt, Missionen
+├── docs/
+└── tools/
+```
 
-- Tool: `import_repo`
-- Auto: `MIRROR_REPO` default = Bitcoin-Clicker, Projekt `hashpool`
-- Abschalten: Env `MIRROR_REPO=off`
+Jede Datei beginnt mit einem Kommentar zur Funktion, z.B.
+`/* build.css — PC-Bau Overlay, 3D-Case, Teile-Tray */`
+
+---
+
+## Live
+
+Solange nicht alle JS-Module online sind, kann die Startseite noch den
+vollen Stand per CDN laden (Spiel bleibt spielbar).
+
+## Links
+
+| Was | URL |
+|-----|-----|
+| Spiel | https://ki-king222.github.io/Bitcoin-Clicker/ |
+| Tester | https://ki-king222.github.io/Bitcoin-Clicker/tools/tester.html |

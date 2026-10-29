@@ -1,0 +1,28 @@
+/* modals.css — Modals, Toasts, Footer */
+.modal-bg{
+    position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center;
+    z-index:50; padding:20px;
+  }
+  .modal{
+    background:linear-gradient(180deg,var(--panel),var(--panel2)); border:1px solid var(--line);
+    border-radius:14px; padding:24px; max-width:340px; text-align:center;
+  }
+  .modal h2{font-size:18px;margin:0 0 8px;color:var(--btc);}
+  .modal p{font-size:13px;color:var(--muted);margin:0 0 6px;line-height:1.4;}
+  .modal .earned{font-size:24px;font-weight:800;color:var(--green);margin:10px 0 16px;}
+  .modal button{
+    background:var(--btc); color:#1a1206; border:none; border-radius:9px; font-family:inherit;
+    font-weight:700; font-size:14px; padding:9px 22px; cursor:pointer;
+  }
+  .modal-btns{display:flex;gap:10px;justify-content:center;}
+  .modal-btn-secondary{background:var(--panel2) !important;color:var(--text) !important;border:1px solid var(--line) !important;}
+
+  .buy-toast{
+    position:fixed; left:50%; bottom:calc(env(safe-area-inset-bottom,0px) + 24px);
+    transform:translateX(-50%) translateY(20px); opacity:0;
+    background:var(--panel2); border:1px solid var(--btc-dim); color:var(--green);
+    font-weight:700; font-size:13px; padding:10px 16px; border-radius:10px;
+    z-index:300; pointer-events:none; transition:opacity .2s ease, transform .2s ease;
+    box-shadow:0 8px 24px rgba(0,0,0,.4);
+  }
+  .buy-toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
