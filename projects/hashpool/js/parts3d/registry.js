@@ -34,8 +34,8 @@
  * claudeUi (steht hier in registry.js, weil diese Datei vom Loader in den Spiel-Scope gesetzt wird und so state/bootPlayed/openPasteStage sieht)
  * Oberflaeche rund um das Claude-3D-Rig (laeuft zusammen mit claudeRig.js, aendert Wirtschaft/Speichern nicht)
  *   1. Kompatibilitaet: wenige echte Regeln (Sockel, DDR/Slots, Formfaktor, Radiator, Kuehlerhoehe), Meldungen mit Teilenamen
- *   2. Teile-Auswahl: jede Zeile zeigt Daten + "passt" / "passt nicht: Grund"; Antippen eines unpassenden Teils zeigt die Meldung
- *   3. Teile-Shop: Kompatibilitaets-Daten im Detail
+ *   2. Teile-Auswahl: Reihenfolge Mainboard zuerst, naechste Kategorie klappt von selbst auf, jede Zeile zeigt Daten + "passt" / "passt nicht: Grund"
+ *   3. Teile-Shop: Hinweis in der Liste und im Detail (passt zu deiner Auswahl? womit kombinierbar?)
  *   4. Gehaeuse ohne Glasseite: Seitenwand ist waehrend des Baus abgenommen und schliesst sich nach dem Einschalten
  *   5. GPU-Beschriftung steht nicht mehr auf dem Kopf
  *   6. Software-Schritt nach der Waermeleitpaste: Betriebssystem, Treiber, Miner per Terminal installieren
@@ -129,6 +129,47 @@
   function errs(list) { return list.map(function (r) { return { part: T("Passt nicht", "Incompatible"), msg: de() ? r.de : r.en, ids: r.ids }; }); }
   function curSpec() { var f = P().specFromBuildPick; return f ? JSON.parse(JSON.stringify(f())) : {}; }
   function withPick(id) { var s = curSpec(), cat = String(id).split("-")[0]; if (cat === "ssd") s.ssd = [id]; else s[cat] = id; return s; }
+  /* ---------- Reihenfolge + Paar-Pruefung (fuer Hinweise beim Kaufen) ---------- */
+  var ORDER = ["mobo", "cpu", "ram", "case", "cooler", "ssd", "gpu", "psu"];       // Grundplattform zuerst: das Mainboard legt Sockel, DDR und Formfaktor fest
+  var REL = { cpu: ["mobo"], mobo: ["cpu", "ram", "case"], ram: ["mobo"], case: ["mobo", "cooler"], cooler: ["case"] };
+  function catOf(id) { return String(id).split("-")[0]; }
+  function catName(c) { try { var n = PART_CATALOG[c].name; return n[de() ? "de" : "en"] || n.en; } catch (e) { return c; } }
+  function itemsOf(c) { try { return PART_CATALOG[c].items.map(function (i) { return i.id; }); } catch (e) { return []; } }
+  function owned(c) { try { return itemsOf(c).filter(function (id) { return (state.partInv[id] || 0) > 0; }); } catch (e) { return []; } }
+  function pairSpec(a, b) {
+    var s = {}; [a, b].forEach(function (id) { var c = catOf(id); if (c === "ssd") s.ssd = [id]; else s[c] = id; });
+    if (s.case && s.cooler && !s.mobo) s.mobo = "mobo-1";                              // Kuehlerhoehe haengt nur am kleinsten Board-Typ
+    return s;
+  }
+  function pairRules(a, b) { return rules(pairSpec(a, b)).filter(function (r) { return r.ids.indexOf(a) >= 0 && r.ids.indexOf(b) >= 0; }); }
+  function listText(fits, all) {
+    if (fits.length === all.length) return T("alle", "all");
+    if (!fits.length) return T("keine", "none");
+    if (fits.length > all.length / 2) return T("alle außer ", "all except ") + all.filter(function (i) { return fits.indexOf(i) < 0; }).map(nm).join(", ");
+    return fits.map(nm).join(", ");
+  }
+  /** Zeilen "Mainboards: ..." - womit passt dieses Teil zusammen */
+  function compatLines(id) {
+    var c = catOf(id), out = [];
+    (REL[c] || []).forEach(function (oc) {
+      var all = itemsOf(oc), fits = all.filter(function (o) { return pairRules(id, o).length === 0; });
+      out.push("<b>" + catName(oc) + ":</b> " + listText(fits, all));
+    });
+    return out;
+  }
+  /** Passt das Teil zu dem, was der Spieler gewaehlt (oder im Inventar) hat? -> { bad:[{other,msg}], ok:n } */
+  function verdict(id) {
+    var c = catOf(id), sp = curSpec(), res = { bad: [], ok: 0 };
+    (REL[c] || []).forEach(function (oc) {
+      var picked = oc === "ssd" ? (sp.ssd && sp.ssd[0]) : sp[oc], cands = picked ? [picked] : owned(oc);
+      if (!cands.length) return;
+      var fits = cands.filter(function (o) { return pairRules(id, o).length === 0; });
+      if (fits.length) { res.ok++; return; }
+      var r = pairRules(id, cands[0])[0]; res.bad.push({ other: cands[0], msg: r ? (de() ? r.de : r.en) : "", picked: !!picked, n: cands.length });
+    });
+    return res;
+  }
+
   function install() {
     var p = P(); if (!p.Claude) return false;
     p.compat = function (spec) { var e = errs(rules(spec || {})); return { errors: e, warnings: [], ok: e.length === 0 }; };
@@ -142,7 +183,7 @@
     if (document.getElementById("cu-style")) return;
     var s = document.createElement("style"); s.id = "cu-style";
     s.textContent = ".cu-facts{font-size:11px;color:#8b95a5;margin-top:2px}.cu-note{font-size:11px;margin-top:3px;line-height:1.3}.cu-ok{color:#78d505}.cu-no{color:#ff7a6b}" +
-      ".ps-row.cu-bad{opacity:.62;border-color:#7a2b2b!important}.cu-bad .ps-row-model{text-decoration:line-through;text-decoration-color:#7a2b2b}" +
+      ".ps-row.cu-warn{opacity:.78}.ps-row.cu-bad{opacity:.62;border-color:#7a2b2b!important}.cu-bad .ps-row-model{text-decoration:line-through;text-decoration-color:#7a2b2b}" +
       ".cu-det{margin:8px 0 2px;padding:8px 10px;border:1px dashed #2c3646;border-radius:8px;font-size:12px;color:#c3cbd6;line-height:1.45}.cu-det b{color:#e7e9ec}" +
       "#sw-stage .sw-term{background:#05080a;color:#7cfc8a;font:11px/1.4 ui-monospace,Menlo,monospace;padding:10px;border-radius:8px;min-height:150px;max-height:210px;overflow:auto;white-space:pre-wrap;word-break:break-all;margin:0 0 10px}" +
       "#sw-stage .sw-term .dim{color:#5f8f67}#sw-stage .sw-term .hl{color:#ffd166}#sw-stage .sw-big{width:100%;font:700 15px inherit;padding:14px;border-radius:10px;border:1px solid var(--btc);background:var(--btc);color:#1a1206;cursor:pointer;touch-action:manipulation;-webkit-user-select:none}#sw-stage .sw-big:disabled{opacity:.45}";
@@ -154,38 +195,80 @@
   }
 
   /* ---------- Teile-Auswahl + Shop beobachten ---------- */
-  var obs = null;
+  var obs = null, lastSig = null;
+  function reorder(parent, sel, keyOf) {
+    var kids = [].slice.call(parent.querySelectorAll(sel)).filter(function (k) { return k.parentNode === parent; });
+    if (kids.length < 2) return;
+    var sorted = kids.slice().sort(function (a, b) { return keyOf(a) - keyOf(b); });
+    if (sorted.every(function (k, i) { return k === kids[i]; })) return;
+    var after = kids[kids.length - 1].nextSibling;
+    sorted.forEach(function (k) { parent.insertBefore(k, after); });
+  }
+  function ordIdx(c) { var i = ORDER.indexOf(c); return i < 0 ? 99 : i; }
+  function guide(body) {                                                           // nach jeder Auswahl: naechste leere Kategorie (in ORDER) aufklappen
+    var sp = curSpec(), sig = JSON.stringify(sp); if (sig === lastSig) return; lastSig = sig;
+    var next = null; ORDER.some(function (c) { var has = c === "ssd" ? (sp.ssd && sp.ssd.length) : sp[c]; if (!has) { next = c; return true; } return false; });
+    (function step(k) {
+      var b = document.getElementById("ps-picker-body"); if (!b || k > 8) return;
+      var heads = [].slice.call(b.querySelectorAll("[data-acc-cat]")), open = heads.filter(function (h) { return h.parentNode.classList.contains("open"); });
+      var wrong = open.filter(function (h) { return h.getAttribute("data-acc-cat") !== next; })[0];
+      if (wrong) { wrong.click(); setTimeout(function () { step(k + 1); }, 30); return; }
+      var nh = heads.filter(function (h) { return h.getAttribute("data-acc-cat") === next; })[0];
+      if (nh && !nh.parentNode.classList.contains("open")) nh.click();
+    })(0);
+  }
+  function note(main, cls, text) { var n = document.createElement("div"); n.className = "cu-note " + cls; n.textContent = text; main.appendChild(n); }
   function annotate() {
     var body = document.getElementById("ps-picker-body");
     if (body) {
+      reorder(body, ".ps-acc", function (a) { var h = a.querySelector("[data-acc-cat]"); return ordIdx(h && h.getAttribute("data-acc-cat")); });
+      if (!body.querySelector(".cu-order")) {
+        var hint = body.querySelector(".ps-inv-hint"), o = document.createElement("p"); o.className = "ps-inv-hint cu-order";
+        o.innerHTML = "<b>" + T("Tipp:", "Tip:") + "</b> " + T("Fang mit dem Mainboard an – es legt Sockel, RAM-Typ und Größe fest. Danach siehst du nur noch, was dazu passt.", "Start with the mainboard – it decides socket, RAM type and size. After that you can see what fits.");
+        if (hint && hint.parentNode) hint.parentNode.insertBefore(o, hint.nextSibling); else body.insertBefore(o, body.firstChild);
+      }
       body.querySelectorAll("[data-pick-id]").forEach(function (row) {
         if (row.getAttribute("data-cu")) return;
         row.setAttribute("data-cu", "1");
         var id = row.getAttribute("data-pick-id"), main = row.querySelector(".ps-row-main"); if (!main) return;
         var f = document.createElement("div"); f.className = "cu-facts"; f.textContent = factText(id); main.appendChild(f);
         var r = P().canPick ? P().canPick(id) : { ok: true };
-        var cat = id.split("-")[0], sp = curSpec(), ctx = Object.keys(sp).some(function (k) { return k !== cat; });
+        var cat = catOf(id), sp = curSpec(), ctx = Object.keys(sp).some(function (k) { return k !== cat; });
         if (!r.ok) {
           row.classList.add("cu-bad"); row.setAttribute("data-cu-msg", r.errors.map(function (e) { return e.msg; }).join(" "));
-          var n = document.createElement("div"); n.className = "cu-note cu-no"; n.textContent = "✗ " + r.errors[0].msg; main.appendChild(n);
-        } else if (ctx) {
-          var n2 = document.createElement("div"); n2.className = "cu-note cu-ok"; n2.textContent = "✓ " + T("passt zu deiner Auswahl", "fits your selection"); main.appendChild(n2);
-        }
+          note(main, "cu-no", "✗ " + r.errors[0].msg);
+        } else if (ctx) note(main, "cu-ok", "✓ " + T("passt zu deiner Auswahl", "fits your selection"));
       });
+      body.querySelectorAll(".ps-acc-body").forEach(function (box) {                  // Unpassende nach unten
+        var rows = [].slice.call(box.querySelectorAll(".ps-row[data-pick-id]")), bad = rows.filter(function (r) { return r.classList.contains("cu-bad"); });
+        if (bad.length && bad.length < rows.length && rows.indexOf(bad[0]) < rows.length - bad.length) bad.forEach(function (r) { box.appendChild(r); });
+      });
+      setTimeout(function () { try { guide(body); } catch (e) {} }, 0);                // ausserhalb von annotate: die Klicks loesen neue Beobachtungen aus
     }
     var shop = document.getElementById("ps-body");
     if (shop) {
+      var shelves = shop.querySelector(".ps-shelves");
+      if (shelves) reorder(shelves, ".ps-shelf", function (e) { return ordIdx(e.getAttribute("data-cat")); });
+      shop.querySelectorAll(".ps-row[data-id]").forEach(function (row) {              // Liste: passt es zu dem, was ich schon habe/gewaehlt habe?
+        if (row.getAttribute("data-cu")) return;
+        row.setAttribute("data-cu", "1");
+        var id = row.getAttribute("data-id"), main = row.querySelector(".ps-row-main"); if (!main) return;
+        var v = verdict(id);
+        if (v.bad.length) { row.classList.add("cu-warn"); note(main, "cu-no", "✗ " + v.bad[0].msg); }
+        else if (v.ok) note(main, "cu-ok", "✓ " + T("passt zu deinen Teilen", "fits your parts"));
+      });
       var sel = shop.querySelector(".ps-row.selected[data-id]"), det = shop.querySelector(".ps-detail.open");
       if (sel && det && !det.querySelector(".cu-det")) {
         var id2 = sel.getAttribute("data-id"), d = document.createElement("div"); d.className = "cu-det";
-        var f2 = F(id2), tip = "";
-        if (f2.cat === "cpu") tip = T("Braucht ein Mainboard mit Sockel ", "Needs a mainboard with socket ") + String(f2.socket).toUpperCase() + ".";
-        else if (f2.cat === "mobo") tip = T("Passt nur zu CPUs mit Sockel ", "Only fits CPUs with socket ") + String(f2.socket).toUpperCase() + T(", RAM vom Typ DDR", ", RAM type DDR") + f2.ddr + T(" und Gehäusen für ", " and cases for ") + (FORM[f2.form] || f2.form) + ".";
-        else if (f2.cat === "ram") tip = T("Nur auf Mainboards mit DDR", "Only on mainboards with DDR") + f2.ddr + (f2.sticks > 2 ? T(" und 4 Slots.", " and 4 slots.") : ".");
-        else if (f2.cat === "cooler") tip = f2.kind === "aio" ? T("Der Radiator braucht ein Gehäuse mit Radiator-Platz für ", "The radiator needs a case with room for ") + f2.rad + " mm." : T("Hohe Tower-Kühler passen nicht in kleine Gehäuse.", "Tall tower coolers do not fit small cases.");
-        else if (f2.cat === "case") tip = T("Nimmt Mainboards: ", "Takes mainboards: ") + f2.forms.map(function (x) { return FORM[x]; }).join(", ") + ".";
-        else if (f2.cat === "ssd") tip = T("Im Spiel ist genau eine SSD verbaubar.", "Only one SSD can be installed in the game.");
-        d.innerHTML = "<b>" + T("Daten", "Specs") + ":</b> " + factText(id2) + (tip ? "<br>" + tip : "");
+        var f2 = F(id2), tip = "", html = "<b>" + T("Daten", "Specs") + ":</b> " + factText(id2);
+        var v2 = verdict(id2);
+        if (v2.bad.length) html = '<div class="cu-no"><b>✗ ' + T("Passt nicht zu deiner Auswahl", "Does not fit your selection") + "</b><br>" + v2.bad.map(function (b) { return b.msg; }).join("<br>") + "</div>" + html;
+        else if (v2.ok) html = '<div class="cu-ok"><b>✓ ' + T("Passt zu dem, was du hast", "Fits what you have") + "</b></div>" + html;
+        var lines = compatLines(id2);
+        if (lines.length) html += "<br><b>" + T("Passt zusammen mit", "Works together with") + "</b><br>" + lines.join("<br>");
+        else html += "<br>" + T("Passt mit allen anderen Teilen zusammen.", "Works with all other parts.");
+        if (f2.cat === "ssd") html += "<br>" + T("Im Spiel ist genau eine SSD verbaubar.", "Only one SSD can be installed in the game.");
+        d.innerHTML = html;
         det.insertBefore(d, det.querySelector(".ps-detail-actions"));
       }
     }
