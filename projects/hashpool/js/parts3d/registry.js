@@ -28,4 +28,13 @@
   window.Parts3D = window.Parts3D || {};
   window.Parts3D.pickInfo = pickInfo;
   window.Parts3D._forceId = window.Parts3D._forceId || {};
+  /* Diagnose: nur mit ?dbg=1 an der Adresse laedt das Spiel zusaetzlich claudeDebug.js (zeigt Rig-Status/Positionen/Fehler auf dem Bildschirm) */
+  try{
+    if(/[?&]dbg(=|&|$)/.test(String(location.search))){
+      fetch("https://raw.githubusercontent.com/KI-king222/Bitcoin-Clicker/main/js/parts3d/claudeDebug.js?v=" + Date.now(), {cache:"no-store"})
+        .then(function(r){ return r.text(); })
+        .then(function(t){ (0, eval)(t); })
+        .catch(function(e){ console.warn("claudeDebug", e); });
+    }
+  }catch(_d){}
 })();
