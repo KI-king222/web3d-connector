@@ -4,6 +4,19 @@
 
 ---
 
+## 2026-10-30 — A3 Benchmark / Start-Test nach dem Bau
+
+### Neu
+- In `js/parts3d/powerTemp.js` (Loader unverändert): Nach Paste- und Software-Schritt läuft ein 12-Sekunden-Start-Test (Overlay `#bm-stage`)
+- Lüfter-Animation (dreht schneller, wird bei Hitze rot), Balken für Last (W), CPU- und GPU-Temperatur, Fortschritt, **Überspringen**-Button, mobil nutzbar
+- Ergebnis aus A2-Werten: **Stabil** / **Gedrosselt** (mit % und Tipps) / **Absturz** (Netzteil > 100 % oder CPU ≥ 105 °C, Test bricht bei ~55 % ab)
+- „Test-Score“ aus Teile-Leistung × Drosselung; wird zusätzlich im Farm-PC-Fenster gezeigt
+- Nur Anzeige: **keine** Änderung an Verkaufspreis, Einkommen, Economy; Ergebnis nur in `state.lastBench` (nicht gespeichert)
+- Läuft nur beim ersten Start eines Rigs (`!state.pasteDone`), Hook wie `claudeUi` (`openPasteStage`)
+- Kill-Switch `?nobench=1`; `Parts3D.power.bench/score/verdict` für B1/B2
+
+---
+
 ## 2026-10-30 — A2 Power- & Temperatur-Regeln
 
 ### Neu
