@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-10-30 — A2 Power- & Temperatur-Regeln
+
+### Neu
+- `js/parts3d/powerTemp.js` — Last (Summe Teile-Watt) gegen Netzteil × 0.9, CPU-/GPU-Temperatur aus Last, Kühler-Kapazität und Gehäuse-Airflow
+- Anzeige: Leiste im Teile-Picker („⚡ Netzteil 420 / 650 W“, Temp-Balken, Warntexte) und im Farm-PC-Fenster
+- Warnung/Drossel nur als Anzeige („Leistung nach Drosselung: x %“) — **keine** Änderung an Economy/Clicker
+- `Parts3D.power.calc(ids)` für spätere Features (A3 Benchmark, B1 Aufträge)
+- Spielwerte aus Teilestufe/Typ (Catalog hat kein tdp/heat); Netzteil-Watt und Kühlertyp aus `Parts3D.partFacts`
+- Kill-Switch `?nopower=1`; Loader in `sceneLayout.js` lädt jetzt `farmRoom` und `powerTemp`
+
+---
+
 ## 2026-10-30 — A1 Farm-Raum 3D
 
 ### Neu

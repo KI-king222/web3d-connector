@@ -115,7 +115,7 @@
     var leftTop = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.55, halfD * 2 - 0.1), panel);
     leftTop.position.set(lx + 0.02, yTop - 0.35, cz); g.add(leftTop);
 
-    var rightPanel = new THREE.Mesh(new THREE.BoxGeometry(halfW * 0 + 0.04, halfH * 2 - 0.1, halfD * 2 - 0.1), panel);
+    var rightPanel = new THREE.Mesh(new THREE.BoxGeometry(0.04, halfH * 2 - 0.1, halfD * 2 - 0.1), panel);
     rightPanel.position.set(cx + halfW, cy, cz); g.add(rightPanel);
     for(var dc=0; dc<6; dc++){
       var cage = new THREE.Mesh(new THREE.BoxGeometry(0.40, 0.06, 1.15), accent);
@@ -146,6 +146,7 @@
   window.Parts3D.buildTable = buildTableDetailed;
   window.Parts3D.buildFrame = buildFrameDetailed;
   window.Parts3D.LAYOUT = {
+    /* left wall ≈ -2.76; mobo halfW=0.8 → center -1.92 = left edge -2.72 (flush to I/O wall) */
     benchMobo: [2.80, -1.05, 0.0],
     caseMobo:  [-1.92, 1.00, 0.05],
     gpu:       [-2.35, -0.40, 0.12],
@@ -156,13 +157,14 @@
   };
 })();
 
-/* A1 Farm-Raum */
+/* A1 Farm-Raum + A2 Power/Temp: Module nachladen (direktes eval -> Spiel-Scope: state, save, sellRig ...). Aus: ?nofarm=1 / ?nopower=1 */
 (function(){
-  try{
-    if(/[?&]nofarm(=|&|$)/.test(String(location.search))) return;
-    fetch("https://raw.githubusercontent.com/KI-king222/Bitcoin-Clicker/main/js/parts3d/farmRoom.js",{cache:"no-store"})
-      .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.text(); })
-      .then(function(t){ try{ eval(t); }catch(e){ console.warn("[farm] eval",e); } })
-      .catch(function(e){ console.warn("[farm] laden fehlgeschlagen",e); });
-  }catch(e){ console.warn("[farm]",e); }
+  ["farmRoom","powerTemp"].forEach(function(n){
+    try{
+      fetch("https://raw.githubusercontent.com/KI-king222/Bitcoin-Clicker/main/js/parts3d/"+n+".js",{cache:"no-store"})
+        .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.text(); })
+        .then(function(t){ try{ eval(t); }catch(e){ console.warn("["+n+"] eval",e); } })
+        .catch(function(e){ console.warn("["+n+"] laden fehlgeschlagen",e); });
+    }catch(e){ console.warn("["+n+"]",e); }
+  });
 })();
