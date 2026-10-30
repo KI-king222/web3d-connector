@@ -156,3 +156,14 @@
     camCase:   { x: -0.5, y: 0.5, z: 10.5 }
   };
 })();
+
+/* A1 Farm-Raum: farmRoom.js nachladen (direktes eval -> Spiel-Scope: state, save, sellRig ...). Aus: ?nofarm=1 */
+(function(){
+  try{
+    if(/[?&]nofarm(=|&|$)/.test(String(location.search))) return;
+    fetch("https://raw.githubusercontent.com/KI-king222/Bitcoin-Clicker/main/js/parts3d/farmRoom.js",{cache:"no-store"})
+      .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.text(); })
+      .then(function(t){ try{ eval(t); }catch(e){ console.warn("[farm] eval",e); } })
+      .catch(function(e){ console.warn("[farm] laden fehlgeschlagen",e); });
+  }catch(e){ console.warn("[farm]",e); }
+})();

@@ -4,6 +4,25 @@
 
 ---
 
+## 2026-10-30 — A1 Farm-Raum 3D
+
+### Neu
+- `js/parts3d/farmRoom.js` — Button „🏭 Meine Farm (n/6)“ neben dem Teile-Shop; Overlay mit 3D-Raum (Boden, Wand, Licht, 1 Rack, 6 Plätze)
+- Orbit/Zoom/Pan wie im Bau-Modus (1 Finger drehen, 2 Finger zoomen/verschieben), PC antippen → Teileliste + grobe Werte (Leistung/Effizienz/Preis-Leistung, Teilewert)
+- Nach dem Verkauf eines Rigs: „In Farm stellen?“ (Verkauf/Belohnung unverändert); Farm voll → Hinweis; Rig entfernen mit Doppel-Tipp-Bestätigung
+- Leere Plätze: „Beispiel-Rig hier abstellen“
+- `state.farmSlots = [{ id, name, partIds, placedAt, pos }]`; Speicherung in `localStorage` (`hashpool-farm-v1[:user]`) bei jedem `save()` und im `HashpoolSave`-Payload
+- DE/EN über `state.lang`; Kill-Switch `?nofarm=1`
+- Geladen per kleinem Loader am Ende von `sceneLayout.js` (direktes `eval` im Spiel-Scope)
+
+### Nicht in A1
+- Strom/Temperatur-Simulation, Multiplayer, Kabel zwischen Racks
+
+### Sonstiges (2026-10-29)
+- `registry.js` enthält zusätzlich `claudeUi` (Kompatibilitätsregeln, Auswahlreihenfolge Mainboard zuerst, Kauf-Hinweise, Seitenwand bei Gehäusen ohne Glas, GPU-Beschriftung, Software-Install-Stage)
+
+---
+
 ## 2026-10-27 — Claude-Zusammenbau im Spiel
 
 ### Runtime
