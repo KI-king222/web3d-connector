@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-10-31 — Lader wiederhergestellt (Fix: Shop/Einbau, Kommazahlen, Farm/Power/Benchmark)
+
+### Problem
+- `index.html` lud ein gepacktes Bundle (`hp_b64_0..5.txt`); dadurch: Shop und Einbau-Menü ließen sich nicht öffnen, Kommazahlen (Economy-Patches des Laders) fehlten, Farm/Power/Benchmark-Module blieben ohne Spiel-Scope wirkungslos
+
+### Änderung
+- `index.html`: wieder der Lader „Original-Spiel (jsDelivr, gepinnt) + Patch-Module“ inkl. aller Patches (EconomyNerf, PartShop-Hooks, Layout, AssembleHook …); Cache `?v=20261031a`
+- `js/partShop.js`: schlanker Lader, der die Shop-Chunks `ps_c0..10.js` holt und im Spiel-Scope per `eval` ausführt (kein `window.state` nötig)
+- `hp_b64_*.txt`, `farmFix.js` bleiben liegen, werden aber nicht mehr geladen (`farmFix` war nur fürs Bundle gedacht)
+
+---
+
 ## 2026-10-30 — A3 Benchmark / Start-Test nach dem Bau
 
 ### Neu
