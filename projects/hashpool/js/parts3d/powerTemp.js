@@ -5,6 +5,7 @@
  *  - API: Parts3D.power.calc(ids) -> { load, psu, limit, cpuT, gpuT, perf, status, msgs }
  *  - A3: nach dem Bau (nach Paste/Software) 12-s-Start-Test mit Lüfter-Anim, Ergebnis Stabil/Gedrosselt/Absturz, Skip-Button. Aus: ?nobench=1
  *    Zusaetzlich: Fallback, wenn Paste/Software uebersprungen wurden (Start beim Wechsel bootPlayed false->true) und Button "Start-Test ansehen" in Picker/Farm
+ *    Pro Rig nur EIN automatischer Test (Hook und Fallback teilen sich das Flag benchRan; Reset nach Verkauf = bootPlayed true->false)
  * Werte sind Spielwerte aus Stufe/Typ der Teile. Aus: ?nopower=1. DE/EN ueber state.lang.
  */
 (function () {
@@ -74,6 +75,9 @@
     if (r.perf < 0.995) h += '<div class="pt-msg">' + T("Leistung durch Drosselung: ", "Performance after throttling: ") + Math.round(r.perf * 100) + " %</div>";
     return h;
   }
+  (function () {                                                           // "In Farm stellen?" erst zeigen, wenn die Verkaufs-Anzeige (welcome-modal) zu ist
+    try { var st = document.createElement("style"); st.id = "pt-offer-style"; st.textContent = "body:has(#welcome-modal[style*=\"flex\"]) .farm-offer{display:none!important}"; document.head.appendChild(st); } catch (e) {}
+  })();
   var farmIds = null;
   function BTN(src) { return '<button type="button" class="pt-bench-btn" data-bench="' + src + '">🧪 ' + T("Start-Test ansehen", "Run boot test") + "</button>"; }
   function ensureBox(parent, before, id) {
@@ -166,7 +170,7 @@
     var orig = openPasteStage;
     openPasteStage = function (onDone) {
       var fresh = true, ids = null; try { fresh = !state.pasteDone; var bp = state.buildPick || {}; ids = {}; Object.keys(bp).forEach(function (k) { ids[k] = one(bp[k]); }); } catch (e) {}
-      return orig.call(this, function () { if (fresh && ids && ids.cpu) { try { runBench(ids, function () { if (onDone) onDone(); }); } catch (e) { console.warn("[bench]", e); if (onDone) onDone(); } } else if (onDone) onDone(); });
+      return orig.call(this, function () { if (fresh && ids && ids.cpu && !benchRan) { try { runBench(ids, function () { if (onDone) onDone(); }); } catch (e) { console.warn("[bench]", e); if (onDone) onDone(); } } else if (onDone) onDone(); });
     };
     openPasteStage._bm = true; return true;
   }
@@ -178,13 +182,13 @@
     var b = ev.target && ev.target.closest ? ev.target.closest(".pt-bench-btn") : null; if (!b) return;
     ev.preventDefault(); ev.stopPropagation();
     var ids = null; try { ids = b.getAttribute("data-bench") === "farm" ? farmIds : state.buildPick; } catch (e) {}
-    if (ids && (one(ids.cpu) || one(ids.gpu))) { try { var c = {}; Object.keys(ids).forEach(function (k) { c[k] = one(ids[k]); }); runBench(c, function () {}); } catch (e) { console.warn("[bench]", e); } }
+    if (ids && (one(ids.cpu) || one(ids.gpu))) { try { var c = {}; Object.keys(ids).forEach(function (k) { c[k] = one(ids[k]); }); var was = benchRan; runBench(c, function () {}); benchRan = was; } catch (e) { console.warn("[bench]", e); } }
   }, true);
   var prevBoot = null;                                                      // Fallback: Test auch starten, wenn Paste/Software uebersprungen wurden (bootPlayed false -> true)
   if (!/[?&]nobench(=|&|$)/.test(String(W.location && W.location.search))) setInterval(function () {
     try {
       var bp = (typeof bootPlayed !== "undefined") ? !!bootPlayed : null; if (bp === null) return;
-      if (!bp) benchRan = false;
+      if (prevBoot === true && !bp) benchRan = false;                       // neuer Rig (nach Verkauf) -> wieder erlaubt
       if (prevBoot === false && bp === true && !benchRan) {
         var pick = state.buildPick || {}, ids = {}; Object.keys(pick).forEach(function (k) { ids[k] = one(pick[k]); });
         if (ids.cpu) runBench(ids, function () {});
