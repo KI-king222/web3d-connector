@@ -27,21 +27,20 @@
   }
 
   /* ---------- Raeume (Draufsicht: x rechts, z zum Betrachter) ---------- */
-  var DIV = -1.3, DOORX = 0.9;                 // Trennwand z, halbe Tuerbreite
-  var FRONT = { x0: -4, x1: 4, z0: -0.7, z1: 3.3 }, BACK = { x0: -4, x1: 4, z0: -6.4, z1: -1.9 };
+  var DIV = -1.3;                              // Trennwand z (Tuer in der Mitte, x -0.95..0.95)
+  var FRONT = { x0: -4, x1: 4 }, BACK = { x0: -4, x1: 4, z0: -6.4, z1: -1.9 };
   function inFront(z) { return z > DIV; }
   function clampPos(x, z) {
-    if (z > 3.4 || (z > DIV - 0.01 && z <= 3.4)) return [Math.max(FRONT.x0, Math.min(FRONT.x1, x)), Math.max(DIV + 0.5, Math.min(3.3, z))];
+    if (z > DIV - 0.01) return [Math.max(FRONT.x0, Math.min(FRONT.x1, x)), Math.max(DIV + 0.5, Math.min(3.3, z))];
     return [Math.max(BACK.x0, Math.min(BACK.x1, x)), Math.max(BACK.z0, Math.min(BACK.z1, z))];
   }
-  function route(fx, fz, tx, tz) {             // Wegpunkte, die durch die Tuer fuehren, wenn der Raum wechselt
+  function route(fx, fz, tx, tz) {             // Raumwechsel immer durch die Tuer (x=0)
     var pts = [], a = inFront(fz), b = inFront(tz);
-    if (a !== b && !(Math.abs(fx) < DOORX && Math.abs(tx) < DOORX)) { pts.push(a ? [0, DIV + 0.9] : [0, DIV - 0.9]); pts.push(a ? [0, DIV - 0.9] : [0, DIV + 0.9]); }
-    else if (a !== b) { pts.push(a ? [Math.max(-DOORX + .2, Math.min(DOORX - .2, fx)), DIV + 0.7] : [Math.max(-DOORX + .2, Math.min(DOORX - .2, fx)), DIV - 0.7]); }
+    if (a !== b) { pts.push(a ? [0, DIV + 0.9] : [0, DIV - 0.9]); pts.push(a ? [0, DIV - 0.9] : [0, DIV + 0.9]); }
     pts.push([tx, tz]); return pts;
   }
 
-  var S = { ready: false, shown: false, hiddenByOverlay: false, t: 0, last: 0, zoom: 1, player: null, cust: null, nextCust: 4, labels: [], hits: [], stations: {}, sig: "", dlg: null, pending: null, invGroup: null, classic: false, raf: 0 };
+  var S = { ready: false, shown: false, hiddenByOverlay: false, t: 0, last: 0, zoom: 1, player: null, cust: null, nextCust: 4, hits: [], stations: {}, sig: "", dlg: null, pending: null, invGroup: null, raf: 0 };
   var root = null;
 
   function css() {
@@ -50,7 +49,7 @@
     s.textContent =
       "#nx-world{position:fixed;inset:0;z-index:800;background:#0a0d14;display:none;touch-action:none}#nx-world.show{display:block}" +
       "#nx-world canvas{position:absolute;left:0;top:0;width:100%;height:100%;display:block;touch-action:none}" +
-      ".nx-hud{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:8px;padding:calc(env(safe-area-inset-top,0px) + 26px) 10px 8px;color:#e7e9ec;font:700 13px monospace;pointer-events:none;background:linear-gradient(#0009,#0000)}" +
+      ".nx-hud{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:8px;padding:calc(env(safe-area-inset-top,0px) + 26px) 10px 8px;color:#e7e9ec;font:700 13px monospace;pointer-events:none;background:linear-gradient(#0009,#0000);z-index:3}" +
       ".nx-hud b{flex:1}.nx-hud button{pointer-events:auto;font:700 12px monospace;padding:8px 10px;border-radius:9px;border:1px solid #2c3646;background:#12161ccc;color:#e7e9ec}" +
       ".nx-lbl{position:absolute;transform:translate(-50%,-100%);background:#12161ce6;color:#f7931a;border:1px solid #f7931a;border-radius:10px;padding:5px 9px;font:700 12px monospace;white-space:nowrap;cursor:pointer;z-index:2}" +
       ".nx-lbl.cust{background:#fff;color:#111;border-color:#fff;font-size:16px}" +
@@ -65,7 +64,7 @@
   }
 
   /* ---------- Figuren ---------- */
-  function makeActor(spec, scale) {
+  function makeActor(spec) {
     var D = SHOPDBG(), ch;
     if (D && D.makeChar) ch = D.makeChar(spec);
     else {                                                                 // Notfall-Figur
@@ -73,7 +72,6 @@
       body.add(cyl(0.2, 0.2, 1.2, mat(spec.shirt || 0xf7931a), 0, 0.8, 0, 10)); var head = new THREE.Group(); head.position.set(0, 1.6, 0); head.add(new THREE.Mesh(new THREE.SphereGeometry(0.2, 10, 8), mat(spec.skin || 0xe8b894))); body.add(head);
       var d = function () { return new THREE.Group(); }; ch = { g: g, body: body, legL: d(), legR: d(), armL: d(), armR: d(), head: head };
     }
-    if (scale) ch.g.scale.setScalar(scale);
     return { g: ch.g, ch: ch, path: [], pi: 0, speed: 2.2, ph: Math.random() * 6, done: null };
   }
   function stepActor(a, dt) {
@@ -108,11 +106,14 @@
     // Strasse
     sc.add(box(80, 0.1, 6, mat(0x23262c, { roughness: 0.95 }), 0, -0.05, 9)); for (var d = -18; d <= 18; d += 3.2) sc.add(box(1.6, 0.012, 0.14, glow(0xd8b73a), d, 0.01, 9));
     sc.add(box(80, 0.14, 2.6, mat(0x8a8d93, { roughness: 0.95 }), 0, 0.07, 4.9));
-    [-6.5, 6.5].forEach(function (x) { sc.add(cyl(0.05, 0.07, 3.6, mat(0x1b1e24), x, 1.8, 5.8, 8)); sc.add(new THREE.Mesh(new THREE.SphereGeometry(0.14, 10, 8), glow(0xffd98a))).position.set(x + (x < 0 ? 0.5 : -0.5), 3.55, 5.8); });
-    // Boeden
-    sc.add(box(8.6, 0.12, 4.4, mat(0x6b5a4a, { roughness: 0.6 }), 0, 0.06, 1.35));
-    sc.add(box(8.6, 0.12, 4.9, mat(0x56606e, { roughness: 0.9 }), 0, 0.06, -4.15));
-    sc.add(box(2.4, 0.125, 1.2, mat(0x3b4658, { roughness: 0.95 }), 0, 0.062, 3.0));
+    [-6.5, 6.5].forEach(function (x) {
+      sc.add(cyl(0.05, 0.07, 3.6, mat(0x1b1e24), x, 1.8, 5.8, 8));
+      var lamp = new THREE.Mesh(new THREE.SphereGeometry(0.14, 10, 8), glow(0xffd98a)); lamp.position.set(x + (x < 0 ? 0.5 : -0.5), 3.55, 5.8); sc.add(lamp);
+    });
+    // Boeden (ueberlappen nicht)
+    sc.add(box(8.6, 0.12, 4.85, mat(0x6b5a4a, { roughness: 0.6 }), 0, 0.06, 1.125));
+    sc.add(box(8.6, 0.12, 5.4, mat(0x56606e, { roughness: 0.9 }), 0, 0.06, -4.0));
+    sc.add(box(2.4, 0.13, 1.2, mat(0x3b4658, { roughness: 0.95 }), 0, 0.062, 3.0));
     // Waende
     var wm = mat(0x2a3446, { roughness: 0.9 }), wl = mat(0x232c3c);
     sc.add(box(8.8, 3.6, 0.18, wm, 0, 1.8, -6.7)); sc.add(box(0.18, 3.6, 9.4, wm, -4.4, 1.8, -2.05)); sc.add(box(0.18, 3.6, 9.4, wm, 4.4, 1.8, -2.05));
@@ -120,12 +121,11 @@
     sc.add(box(8.8, 0.9, 0.3, mat(0x1b2233), 0, 3.15, 3.55));
     var sign = new THREE.Mesh(new THREE.PlaneGeometry(4.6, 0.7), new THREE.MeshBasicMaterial({ map: textTex("HASHPOOL PC-SHOP", 1024, 160, "#10151f", "#f7931a", "bold 96px sans-serif") })); sign.position.set(0, 3.15, 3.71); sc.add(sign);
     var glass = new THREE.MeshStandardMaterial({ color: 0x9fc4e8, transparent: true, opacity: 0.14, roughness: 0.1 });
-    [[-2.55], [2.55]].forEach(function (p) { var gp = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 2.6), glass); gp.position.set(p[0], 1.4, 3.55); sc.add(gp); });
-    // Hinterraum-Details: Boden-Markierung, Lampe
+    [-2.55, 2.55].forEach(function (px) { var gp = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 2.6), glass); gp.position.set(px, 1.4, 3.55); sc.add(gp); });
     sc.add(box(8.0, 0.01, 0.06, glow(0xf7931a), 0, 0.13, DIV + 0.3));
-    // Stationen — Computer (Teile bestellen)
+    // Computer (Teile bestellen)
     var wood = mat(0x4a3526, { roughness: 0.6 });
-    sc.add(box(1.9, 0.08, 0.9, wood, -2.9, 0.95, -6.0)); sc.add(box(0.08, 0.95, 0.08, wood, -3.8, 0.47, -6.35)); sc.add(box(0.08, 0.95, 0.08, wood, -2.0, 0.47, -6.35)); sc.add(box(0.08, 0.95, 0.08, wood, -3.8, 0.47, -5.65)); sc.add(box(0.08, 0.95, 0.08, wood, -2.0, 0.47, -5.65));
+    sc.add(box(1.9, 0.08, 0.9, wood, -2.9, 0.95, -6.0)); [[-3.8, -6.35], [-2.0, -6.35], [-3.8, -5.65], [-2.0, -5.65]].forEach(function (p) { sc.add(box(0.08, 0.95, 0.08, wood, p[0], 0.47, p[1])); });
     sc.add(box(0.8, 0.5, 0.04, mat(0x15181e), -2.9, 1.3, -6.25)); sc.add(box(0.74, 0.44, 0.01, new THREE.MeshBasicMaterial({ map: textTex("TEILE BESTELLEN", 256, 150, "#0a1830", "#6aa8ff", "bold 30px sans-serif") }), -2.9, 1.3, -6.22)); sc.add(box(0.5, 0.02, 0.16, mat(0x2b2f38), -2.9, 1.0, -5.85));
     addStation("pc", -2.9, 1.2, -6.0, 1.9, 1.0, 1.0, "💻 " + T("Teile bestellen", "Order parts"), -2.9, -4.95, function () { openMenu("shop"); });
     // Regal
@@ -146,17 +146,17 @@
     // Theke + Kasse (Laden)
     sc.add(box(3.0, 1.0, 0.8, wood, 2.3, 0.62, 0.2)); sc.add(box(3.1, 0.06, 0.9, mat(0x6e5740), 2.3, 1.15, 0.2)); sc.add(box(0.5, 0.34, 0.03, mat(0x15181e), 1.6, 1.38, 0.1)); sc.add(box(0.46, 0.3, 0.01, glow(0x2a8cff), 1.6, 1.38, 0.12));
     addStation("counter", 2.3, 1.2, 0.2, 3.0, 1.2, 0.9, "🧾 " + T("Theke", "Counter"), 0.6, 0.6, function () { counterAction(); });
-    // Deko Laden: Regal mit Gehaeusen links, Neon
-    sc.add(box(1.8, 2.4, 0.4, mat(0x1a202c), -3.4, 1.3, 2.9)); for (var l = 0; l < 3; l++) for (var n = 0; n < 3; n++) { sc.add(box(0.44, 0.5, 0.34, mat(rnd([0x202833, 0x2b2f38, 0x39414f]), { metalness: 0.5 }), -3.9 + n * 0.5, 0.55 + l * 0.7, 2.9)); sc.add(box(0.015, 0.4, 0.26, glow(rnd([0x78d505, 0xff3a6e, 0x3a8bff, 0xffb020])), -3.9 + n * 0.5 + 0.22, 0.55 + l * 0.7, 2.9)); }
+    // Deko Laden
+    sc.add(box(1.8, 2.4, 0.4, mat(0x1a202c), -3.4, 1.3, 2.9));
+    for (var l = 0; l < 3; l++) for (var n = 0; n < 3; n++) { sc.add(box(0.44, 0.5, 0.34, mat(rnd([0x202833, 0x2b2f38, 0x39414f]), { metalness: 0.5 }), -3.9 + n * 0.5, 0.55 + l * 0.7, 2.9)); sc.add(box(0.015, 0.4, 0.26, glow(rnd([0x78d505, 0xff3a6e, 0x3a8bff, 0xffb020])), -3.9 + n * 0.5 + 0.22, 0.55 + l * 0.7, 2.9)); }
     var neon = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.4), new THREE.MeshBasicMaterial({ map: textTex("OPEN", 256, 112, "#101820", "#4fe38a", "bold 72px sans-serif") })); neon.position.set(-2.4, 2.3, 3.5); sc.add(neon);
     // Nachbarn
     [[-10.5, 0x2b2530], [10.5, 0x25303a]].forEach(function (p) { var b = box(11, 5.4, 9, mat(p[1], { roughness: 0.95 }), p[0], 2.7, -1.5); sc.add(b); for (var r = 0; r < 3; r++) for (var c = 0; c < 4; c++) { var on = Math.random() < 0.55; sc.add(box(0.9, 0.8, 0.05, on ? glow(rnd([0xffd27a, 0xffe9b0, 0x9fd3ff])) : mat(0x161a22), p[0] - 4 + c * 2.6, 1.5 + r * 1.4, 3.05)); } });
-    // Figuren
-    var pl = makeActor({ fem: false, skin: 0xe8b894, hairC: 0x3a2415, hair: "short", shirt: 0xf7931a, pants: 0x23324d, scale: 1, glasses: false, beard: false, phones: false, suit: false, dress: false, hatC: 0xf7931a, eyeC: 0x2b1b10, shoe: 0x1d1d22, fat: 1 }, 1);
+    // Spieler
+    var pl = makeActor({ fem: false, skin: 0xe8b894, hairC: 0x3a2415, hair: "short", shirt: 0xf7931a, pants: 0x23324d, scale: 1, glasses: false, beard: false, phones: false, suit: false, dress: false, hatC: 0xf7931a, eyeC: 0x2b1b10, shoe: 0x1d1d22, fat: 1 });
     pl.g.position.set(1.2, 0.12, 1.4); sc.add(pl.g); S.player = pl;
     S.grp = new THREE.Group(); sc.add(S.grp);
     S.cam = cam; S.rd = rd; S.stage = stage; S.ray = new THREE.Raycaster(); S.v = new THREE.Vector3(); S.ready = true;
-    // Labels
     Object.keys(S.stations).forEach(function (id) {
       var st = S.stations[id], el = document.createElement("div"); el.className = "nx-lbl"; el.textContent = st.label; el.addEventListener("click", function (e) { e.stopPropagation(); useStation(id); }); stage.appendChild(el); st.el = el;
     });
@@ -174,12 +174,10 @@
     el.addEventListener("pointerup", function (e) { if (down && moved < 10) tap(e.clientX, e.clientY); down = false; });
     el.addEventListener("pointercancel", function () { down = false; });
   }
-  function pick(cx, cy) {
-    var r = S.rd.domElement.getBoundingClientRect(); S.ray.setFromCamera({ x: ((cx - r.left) / r.width) * 2 - 1, y: -((cy - r.top) / r.height) * 2 + 1 }, S.cam); return S.ray;
-  }
   function tap(cx, cy) {
     if (S.dlg || S.invOpen) return;
-    var ray = pick(cx, cy), hs = S.hits.slice(); if (S.cust && S.cust.hit) hs.push(S.cust.hit);
+    var r = S.rd.domElement.getBoundingClientRect(); S.ray.setFromCamera({ x: ((cx - r.left) / r.width) * 2 - 1, y: -((cy - r.top) / r.height) * 2 + 1 }, S.cam);
+    var ray = S.ray, hs = S.hits.slice(); if (S.cust && S.cust.hit) hs.push(S.cust.hit);
     var h = ray.intersectObjects(hs, false);
     if (h && h.length) { var o = h[0].object; if (o.userData.st) { useStation(o.userData.st); return; } if (S.cust && o === S.cust.hit) { useStation("counter"); return; } }
     var rd = ray.ray, t = (0.12 - rd.origin.y) / rd.direction.y; if (!(t > 0)) return;
@@ -255,9 +253,9 @@
       var ao = null; O.list().forEach(function (o) { if (o.id === st.active) ao = o; }); var rigs = []; try { rigs = Parts3D.farm.slots() || []; } catch (e) {}
       if (ao && rigs.some(function (r) { try { return O.eval(ao, r.partIds).ok; } catch (e) { return false; } })) { kind = "pickup"; order = ao; var sv = specs()[ao.id]; if (sv) { sp = sv.spec; name = sv.name; } }
     }
-    if (kind === "browse" && !st.active) { var fo = []; O.list().forEach(function (o) { if (!st.done[o.id] && st.active !== o.id) fo.push(o); }); if (fo.length) { order = rnd(fo); kind = "order"; } }
+    if (kind === "browse" && !st.active) { var fo = []; O.list().forEach(function (o) { if (!st.done[o.id]) fo.push(o); }); if (fo.length) { order = rnd(fo); kind = "order"; } }
     if (!sp) { sp = D.randomSpec(order ? LOOK[order.id] : null); if (order && kind === "order") saveSpec(order.id, sp, name); }
-    var a = makeActor(sp, null), side = Math.random() < 0.5 ? -1 : 1; a.g.position.set(side * 9, 0.14, 4.9); a.speed = rr(1.5, 1.9);
+    var a = makeActor(sp), side = Math.random() < 0.5 ? -1 : 1; a.g.position.set(side * 9, 0.14, 4.9); a.speed = rr(1.5, 1.9);
     var hb = new THREE.Mesh(new THREE.BoxGeometry(0.9, 2.2, 0.9), new THREE.MeshBasicMaterial({ visible: false })); hb.position.set(0, 1.1, 0); a.g.add(hb); a.hit = hb;
     a.kind = kind; a.order = order; a.name = name; a.side = side; a.state = "in"; a.wait = 0; S.grp.add(a.g); S.cust = a;
     a.path = [[0, 4.9], [0, 3.0], [0.6, 1.9]].concat(kind === "browse" ? [[rr(-3, 3), rr(0.2, 2.6)], [rr(-3, 3), rr(0.2, 2.6)], [0, 3.0]] : []); a.pi = 0;
@@ -306,9 +304,8 @@
         if (c.state === "wait") { c.wait += dt; c.g.rotation.y += (0.35 - c.g.rotation.y) * Math.min(1, dt * 5); if (c.wait > 90 && !S.dlg) leave(c); }
         if (S.pendLeave === c && !visible("ord-ov", "show")) { S.pendLeave = null; leave(c); }
       }
-      var p = S.player.g.position, z = S.zoom, ty = p.y + 1, tx = Math.max(-3, Math.min(3, p.x)) * 0.8;
-      var cx = tx, cy = ty + 8.2 * z, cz = p.z + 9.6 * z;
-      S.cam.position.x += (cx - S.cam.position.x) * Math.min(1, dt * 3.5); S.cam.position.y += (cy - S.cam.position.y) * Math.min(1, dt * 3.5); S.cam.position.z += (cz - S.cam.position.z) * Math.min(1, dt * 3.5);
+      var p = S.player.g.position, z = S.zoom, ty = p.y + 1, tx = Math.max(-3, Math.min(3, p.x)) * 0.8, k = Math.min(1, dt * 3.5);
+      S.cam.position.x += (tx - S.cam.position.x) * k; S.cam.position.y += (ty + 8.2 * z - S.cam.position.y) * k; S.cam.position.z += (p.z + 9.6 * z - S.cam.position.z) * k;
       S.cam.lookAt(S.cam.position.x * 0.4 + tx * 0.6, ty, p.z - 0.6);
       S.cam.updateMatrixWorld(); Object.keys(S.stations).forEach(function (id) { var st = S.stations[id], q = project(st.lx, st.ly, st.lz); st.el.style.display = q[2] < 1 ? "block" : "none"; st.el.style.left = q[0] + "px"; st.el.style.top = q[1] + "px"; });
       if (cbub) { if (c && c.state === "wait" && !S.dlg) { var q2 = project(c.g.position.x, 2.5, c.g.position.z); cbub.style.display = "block"; cbub.style.left = q2[0] + "px"; cbub.style.top = q2[1] + "px"; cbub.textContent = c.kind === "pickup" ? "📦 ?" : "💬"; } else cbub.style.display = "none"; }

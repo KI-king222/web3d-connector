@@ -1,5 +1,6 @@
 /* next.js — nur in /next/ geladen. Spielwiese fuer den Shop-Simulator.
- * Phase 0: Kennzeichnung, Rueckweg zur stabilen Version. (Hinterraum/Bautisch folgen hier.)
+ * Phase 0: Kennzeichnung, Rueckweg zur stabilen Version.
+ * Phase 1: laedt world.js (Laden + Hinterraum + Stationen). ?noworld=1 schaltet es ab (dann = 1:1 Kopie).
  */
 (function () {
   var W = window;
@@ -15,5 +16,8 @@
   bar.appendChild(a); bar.appendChild(sp); bar.appendChild(back);
   function put() { if (document.body && !document.getElementById("hp-next-bar")) document.body.appendChild(bar); }
   put(); setInterval(put, 2000);
+  if (!/[?&]noworld(=|&|$)/.test(String(W.location && W.location.search))) {
+    var s = document.createElement("script"); s.src = "next/world.js?v=" + Date.now(); s.onerror = function () { console.warn("[NEXT] world.js nicht ladbar"); }; document.body.appendChild(s);
+  }
   console.log("[HASHPOOL NEXT] aktiv");
 })();
