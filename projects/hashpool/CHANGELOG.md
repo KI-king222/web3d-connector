@@ -4,6 +4,21 @@
 
 ---
 
+## 2026-11-01 — B1 Auftragssystem + farmFix v4
+
+### Neu
+- `js/parts3d/orders.js` — Button „📋 Aufträge (n/8)“; 8 Kundenaufträge (Budget, Watt, Temperatur, Score, Stabilität), 1 aktiv
+- Ablauf: Annehmen → PC bauen → „In Farm stellen“ → im Auftragsfenster „Abgeben“ (Rig wird aus der Farm genommen)
+- Belohnung = 25–35 % der Teilekosten, **zusätzlich** zum normalen Verkauf; nach allen 8 neue Runde mit bis zu +100 %
+- Prüfung über `Parts3D.power.calc/score/verdict` (A2/A3) und `PART_CATALOG`-Kosten
+- Speicherung: `state.orders`, `localStorage hashpool-orders-v1[:user]`, `HashpoolSave`-Payload; Kill-Switch `?noorders=1`
+- Geladen vom Loader `farmRoom.js` (von `main`); `powerTemp.js` wird dort nach 6 s nachgeladen, falls `Parts3D.power` fehlt
+
+### Fix
+- `farmFix.js` v4: Loader holte eine alte gepinnte Version; jetzt immer `main`. Nach „In Farm stellen“ bzw. Verkauf wird die Teile-Auswahl verbraucht und das Bau-Menü versteckt (Hauptscreen nach dem Schließen der Farm)
+
+---
+
 ## 2026-10-31 — Lader wiederhergestellt (Fix: Shop/Einbau, Kommazahlen, Farm/Power/Benchmark)
 
 ### Problem
