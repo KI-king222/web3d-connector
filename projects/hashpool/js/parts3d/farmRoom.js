@@ -20,11 +20,11 @@
     if(typeof W.partTierBadge!=="function"){
       W.partTierBadge=function(it,lang){
         var t=(it&&it.tier)?it.tier:1;
-        return "T"+t+" \u00b7 "+W.partTierLabel(it,lang);
+        return "T"+t+" · "+W.partTierLabel(it,lang);
       };
     }
     if(typeof W.partDisplayName!=="function"){
-      W.partDisplayName=function(it){return W.partBaseName(it)+" \u00b7 "+W.partTierLabel(it);};
+      W.partDisplayName=function(it){return W.partBaseName(it)+" · "+W.partTierLabel(it);};
     }
     try{
       if(typeof partBaseName==="undefined") partBaseName=W.partBaseName;
@@ -65,8 +65,8 @@
       .catch(function (e) { console.warn("[farmRoom] try", i, e); loadRoom(i + 1); });
   }
   function loadFix() {
-    loadOne("https://cdn.jsdelivr.net/gh/KI-king222/Bitcoin-Clicker@c822a2762420bcf43c351ea7e1919fafc56c6bbc/js/parts3d/farmFix.js", "farmFix");
-    loadOne("https://raw.githubusercontent.com/KI-king222/Bitcoin-Clicker/main/js/parts3d/farmFix.js", "farmFix-raw");
+    /* immer die aktuelle farmFix.js von main (kein gepinnter Stand mehr), Cache-Buster gegen alte Kopien */
+    loadOne("https://raw.githubusercontent.com/KI-king222/Bitcoin-Clicker/main/js/parts3d/farmFix.js?v=" + Date.now(), "farmFix");
   }
   loadRoom(0);
 })();
