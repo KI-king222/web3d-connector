@@ -67,12 +67,16 @@
   function loadFix() {
     /* immer die aktuelle farmFix.js von main (kein gepinnter Stand mehr), Cache-Buster gegen alte Kopien */
     var b = "https://raw.githubusercontent.com/KI-king222/Bitcoin-Clicker/main/js/parts3d/";
+    var q = String(W.location && W.location.search);
     loadOne(b + "farmFix.js?v=" + Date.now(), "farmFix");
     /* B1 Auftragssystem; Power-/Temp-Modul nur nachladen, falls es sonst nicht da ist */
-    if (!/[?&]noorders(=|&|$)/.test(String(W.location && W.location.search))) {
-      loadOne(b + "orders.js?v=" + Date.now(), "orders");
+    if (!/[?&]noorders(=|&|$)/.test(q)) {
+      loadOne(b + "orders.js?v=" + Date.now(), "orders", function () {
+        /* 3D-Laden (braucht orders.js + three.js) */
+        if (!/[?&]noshop(=|&|$)/.test(q)) loadOne(b + "shopScene.js?v=" + Date.now(), "shopScene");
+      });
       setTimeout(function () {
-        if (!(W.Parts3D && W.Parts3D.power) && !/[?&]nopower(=|&|$)/.test(String(W.location && W.location.search))) loadOne(b + "powerTemp.js?v=" + Date.now(), "powerTemp");
+        if (!(W.Parts3D && W.Parts3D.power) && !/[?&]nopower(=|&|$)/.test(q)) loadOne(b + "powerTemp.js?v=" + Date.now(), "powerTemp");
       }, 6000);
     }
   }

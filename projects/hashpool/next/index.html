@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>HASHPOOL NEXT — Shop Simulator (Test)</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0b0d10">
+<!-- Alle relativen Pfade (js/..., hp_b64_*.txt) zeigen auf die Repo-Wurzel: gleiche Dateien wie die oeffentliche Version.
+     Neues (Shop-Simulator) liegt NUR unter next/ und wird nur hier geladen. -->
+<base href="../">
+</head>
+<body style="margin:0;background:#0b0d10;color:#e7e9ec;font-family:monospace;padding:40px;text-align:center">
+<p id="st">Loading HASHPOOL NEXT…</p>
+<script>
+window.HASHPOOL_NEXT = true;
+(async function(){
+  var st = document.getElementById("st");
+  try {
+    st.textContent = "Unpacking…";
+    var bases = ["", "https://raw.githubusercontent.com/KI-king222/Bitcoin-Clicker/main/"];
+    var n = 6, v = "?v=20261030o";
+    var parts = null, lastErr = null;
+    for (var b = 0; b < bases.length; b++) {
+      try {
+        parts = await Promise.all(Array.from({length:n}, function(_,i){
+          return fetch(bases[b]+"hp_b64_"+i+".txt"+v,{cache:"no-store"}).then(function(r){
+            if(!r.ok) throw new Error("b64 Teil "+i+" HTTP "+r.status);
+            return r.text();
+          });
+        }));
+        lastErr = null;
+        break;
+      } catch (e) { lastErr = e; parts = null; }
+    }
+    if (!parts) throw lastErr || new Error("b64 parts missing");
+    var b64 = parts.join("");
+    function b64ToU8(s){
+      var bin = atob(s);
+      var u8 = new Uint8Array(bin.length);
+      for(var i=0;i<bin.length;i++) u8[i] = bin.charCodeAt(i);
+      return u8;
+    }
+    var ds = new DecompressionStream("gzip");
+    var stream = new Blob([b64ToU8(b64)]).stream().pipeThrough(ds);
+    var code = await new Response(stream).text();
+    st.textContent = "Starting…";
+    (0, eval)(code);
+    // NEXT-Modul (nur in dieser Version)
+    var s = document.createElement("script"); s.src = "next/next.js?v=" + Date.now(); document.body.appendChild(s);
+  } catch(e) {
+    st.textContent = "Laden fehlgeschlagen: " + e.message;
+    console.error(e);
+  }
+})();
+</script>
+</body>
+</html>
