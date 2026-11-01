@@ -1,13 +1,14 @@
-/* farmFix.js v4 — click-capture so 3D Farm gets buildPick after sell / "In Farm stellen" (game is in IIFE)
+/* farmFix.js v5 — click-capture so 3D Farm gets buildPick after sell / "In Farm stellen" (game is in IIFE)
  *  - Angebot bei Verkauf erst nach echtem Verkauf (state.rigsSold steigt); bei "In Farm stellen" sofort
  *  - In beiden Faellen: Auswahl verbrauchen, Bau-Menue/Picker versteckt halten -> nach dem Schliessen der Farm Hauptscreen,
  *    bis der Spieler selbst wieder "Bauen" startet (max. 5 Min.)
  *  - Keine Doppel-Eintraege
+ *  - v5: Geheimcode "OPEN-SHOP" im Code-Feld oeffnet die Test-Version /next/ (Shop-Simulator)
  */
 (function(){
   var W = window;
-  if (W.__farmFixVer >= 4) return;
-  W.__farmFixVer = 4; W.__farmFix = true;
+  if (W.__farmFixVer >= 5) return;
+  W.__farmFixVer = 5; W.__farmFix = true;
   var guardUntil = 0;
   function captureIds(){
     try {
@@ -89,5 +90,27 @@
       }
     } catch(e){ console.warn("[farmFix] offer", e); }
   });
-  console.log("[HASHPOOL] farmFix v4 active");
+
+  /* ---- Geheimcode: OPEN-SHOP im Code-Feld -> Test-Version /next/ ---- */
+  function isCode(v){ return /^\s*open[-_ ]?shop\s*$/i.test(v || ""); }
+  function goNext(inp){
+    try { if (inp) inp.value = ""; } catch(e){}
+    if (W.HASHPOOL_NEXT) return;
+    try { W.location.href = W.location.origin + "/next/"; } catch(e){}
+  }
+  document.addEventListener("keydown", function(ev){
+    try {
+      var t = ev.target;
+      if (ev.key === "Enter" && t && t.tagName === "INPUT" && isCode(t.value)) { ev.preventDefault(); ev.stopImmediatePropagation(); goNext(t); }
+    } catch(e){}
+  }, true);
+  document.addEventListener("click", function(ev){
+    try {
+      var b = ev.target && ev.target.closest ? ev.target.closest("button,[role=button],.btn") : null;
+      if (!b) return;
+      var ins = document.querySelectorAll("input");
+      for (var i = 0; i < ins.length; i++) if (isCode(ins[i].value)) { ev.preventDefault(); ev.stopImmediatePropagation(); goNext(ins[i]); return; }
+    } catch(e){}
+  }, true);
+  console.log("[HASHPOOL] farmFix v5 active");
 })();
