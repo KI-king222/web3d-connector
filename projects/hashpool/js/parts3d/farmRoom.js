@@ -66,7 +66,15 @@
   }
   function loadFix() {
     /* immer die aktuelle farmFix.js von main (kein gepinnter Stand mehr), Cache-Buster gegen alte Kopien */
-    loadOne("https://raw.githubusercontent.com/KI-king222/Bitcoin-Clicker/main/js/parts3d/farmFix.js?v=" + Date.now(), "farmFix");
+    var b = "https://raw.githubusercontent.com/KI-king222/Bitcoin-Clicker/main/js/parts3d/";
+    loadOne(b + "farmFix.js?v=" + Date.now(), "farmFix");
+    /* B1 Auftragssystem; Power-/Temp-Modul nur nachladen, falls es sonst nicht da ist */
+    if (!/[?&]noorders(=|&|$)/.test(String(W.location && W.location.search))) {
+      loadOne(b + "orders.js?v=" + Date.now(), "orders");
+      setTimeout(function () {
+        if (!(W.Parts3D && W.Parts3D.power) && !/[?&]nopower(=|&|$)/.test(String(W.location && W.location.search))) loadOne(b + "powerTemp.js?v=" + Date.now(), "powerTemp");
+      }, 6000);
+    }
   }
   loadRoom(0);
 })();

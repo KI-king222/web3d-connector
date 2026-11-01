@@ -1,12 +1,13 @@
-/* farmFix.js v3 — click-capture so 3D Farm gets buildPick after sell (game is in IIFE)
- *  - Angebot erst nach echtem Verkauf (state.rigsSold steigt)
- *  - Nach dem Verkauf: Auswahl verbrauchen, Bau-Menue/Picker versteckt halten (Hauptscreen), bis der Spieler selbst wieder baut
+/* farmFix.js v4 — click-capture so 3D Farm gets buildPick after sell / "In Farm stellen" (game is in IIFE)
+ *  - Angebot bei Verkauf erst nach echtem Verkauf (state.rigsSold steigt); bei "In Farm stellen" sofort
+ *  - In beiden Faellen: Auswahl verbrauchen, Bau-Menue/Picker versteckt halten -> nach dem Schliessen der Farm Hauptscreen,
+ *    bis der Spieler selbst wieder "Bauen" startet (max. 5 Min.)
  *  - Keine Doppel-Eintraege
  */
 (function(){
   var W = window;
-  if (W.__farmFixVer >= 3) return;
-  W.__farmFixVer = 3; W.__farmFix = true;
+  if (W.__farmFixVer >= 4) return;
+  W.__farmFixVer = 4; W.__farmFix = true;
   var guardUntil = 0;
   function captureIds(){
     try {
@@ -41,8 +42,8 @@
       if (/build|bauen|zusammenbau|assemble|ps-open|neuen pc|new pc/.test(s) && !/farm/.test(s)) guardUntil = 0;
     } catch(e){}
   }, true);
-  function afterSaleCleanup(){
-    guardUntil = Date.now() + 30000;
+  function afterOfferCleanup(){
+    guardUntil = Date.now() + 300000;
     try {
       var bp = W.state && W.state.buildPick;
       if (bp && (bp.cpu || bp.mobo || bp["case"])) {
@@ -74,19 +75,19 @@
   }, true);
   W.addEventListener("hashpool-farm-offer", function(ev){
     try {
-      var ids = ev.detail && ev.detail.partIds, wasSale = !!(ev.detail && ev.detail.sale);
+      var ids = ev.detail && ev.detail.partIds;
       if (!ids) return;
-      if (wasSale) afterSaleCleanup();
       if (W.Parts3D && Parts3D.farm && Parts3D.farm.add) {
         var slots = Parts3D.farm.slots() || [], key = JSON.stringify(ids), now = Date.now();
         for (var i = 0; i < slots.length; i++) {
-          if (JSON.stringify(slots[i].partIds) === key && now - (slots[i].placedAt || 0) < 15000) { if (Parts3D.farm.open) Parts3D.farm.open(); return; }
+          if (JSON.stringify(slots[i].partIds) === key && now - (slots[i].placedAt || 0) < 15000) { afterOfferCleanup(); if (Parts3D.farm.open) Parts3D.farm.open(); return; }
         }
         if (slots.length >= 6) { if (Parts3D.farm.open) Parts3D.farm.open(); return; }
         var r = Parts3D.farm.add(ids);
+        afterOfferCleanup();
         if (r && Parts3D.farm.open) { Parts3D.farm.open(); if (Parts3D.farm.select) Parts3D.farm.select(r.pos); }
       }
     } catch(e){ console.warn("[farmFix] offer", e); }
   });
-  console.log("[HASHPOOL] farmFix v3 active");
+  console.log("[HASHPOOL] farmFix v4 active");
 })();
