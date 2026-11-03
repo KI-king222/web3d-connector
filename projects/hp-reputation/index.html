@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>HASHPOOL NEXT Concept</title>
+<style>
+html,body{margin:0;height:100%;background:#0b0d10;overflow:hidden;font-family:system-ui,sans-serif}
+#hud{position:fixed;left:10px;right:10px;top:8px;z-index:5;color:#e7e9ec;pointer-events:none}
+#hud h1{margin:0;font:700 14px monospace;color:#f7931a}
+#hud p{margin:4px 0 0;font:12px monospace;color:#aeb6c2;max-width:90%}
+#hint{position:fixed;bottom:12px;left:10px;right:10px;text-align:center;color:#aeb6c2;font:11px monospace;z-index:5;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="hud"><h1 id="title">…</h1><p id="desc">…</p></div>
+<div id="hint">Ziehen = drehen · Scroll = zoom · Touch funktioniert</div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script type="module" src="./main.js"></script>
+</body>
+</html>
