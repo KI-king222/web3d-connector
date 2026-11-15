@@ -1,10 +1,10 @@
 import { THREE, bx, rb, cy, M, GOLD, BLACK, grp, flat, plate, rrect, smd, hex6 } from "./kit.js";
 import { P } from "./ports.js";
 
-/* CPU-Bauformen nach echten Vorbildern (alle Masse in mm):
- *  lga  = Intel LGA1700, Traeger 45 x 37.5, Heatspreader mit abgeschraegten Ecken, Kondensatoren an den Schmalseiten
- *  am4  = AMD AM4 PGA, Traeger 40 x 40 mit sichtbaren Pins UNTEN, runder Heatspreader
- *  am5  = AMD AM5 LGA, Traeger 40 x 40, "Oktopus"-Heatspreader mit 4 Aussparungen und Kondensatoren darin */
+/* CPU-Bauformen (alle Masse in mm):
+ *  lga  = LGA1700-Bauform, Traeger 45 x 37.5, Heatspreader mit abgeschraegten Ecken, Kondensatoren an den Schmalseiten
+ *  am4  = PGA-Bauform, Traeger 40 x 40 mit sichtbaren Pins UNTEN, runder Heatspreader
+ *  am5  = LGA-Bauform, Traeger 40 x 40, "Oktopus"-Heatspreader mit 4 Aussparungen und Kondensatoren darin */
 const SPEC = {
   1: { plat: "lga", ihs: 0x8f949b, rough: 0.5, tint: 0x0071c5 },
   2: { plat: "am4", ihs: 0x9b9fa6, rough: 0.46, tint: 0xe8532a },
@@ -70,7 +70,7 @@ export default function cpu(tier, e) {
   // Gravur: Marke + Modell (Ingame-Name)
   g.add(flat(brand, tw * 0.62, 3.4, 0, top + 0.06, -(s.plat === "am4" ? 2.6 : 3.2), { color: hex6(s.tint), opacity: 0.95 }));
   g.add(flat(model || brand, tw, 3.8, 0, top + 0.06, s.plat === "am4" ? 2.4 : 2.2, { color: "#2b2f36", opacity: 0.95 }));
-  if (s.x3d) g.add(flat("3D V-CACHE", 12, 2.2, 0, top + 0.06, 8, { color: "#2b2f36", opacity: 0.9 }));
+  if (s.x3d) g.add(flat("STACK CACHE", 12, 2.2, 0, top + 0.06, 8, { color: "#2b2f36", opacity: 0.9 }));
   // Ports: socket = Unterseite des Traegers (bei AM4 liegen die Pins 2 mm darunter und stecken im Sockel), ihs = Auflage fuer den Kuehler
   const land = s.plat === "am4" ? 2.0 : 0;
   g.userData.ports = [
