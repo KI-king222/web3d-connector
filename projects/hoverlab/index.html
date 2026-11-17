@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hoverlab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: Kopfzeile, links Simulation und Messkurven, rechts die Werkbank mit Reitern (Eingaben, Firmware, Anschlüsse); auf dem Handy untereinander. */
+:root{
+  --bg:#e9edec; --surface:#f6f8f7; --sunk:#dde3e1; --line:#c5cecb; --fg:#14201c; --muted:#53635d;
+  --accent:#d4500a; --accent-fg:#ffffff;
+  --left:#2370c9; --right:#d4500a; --third:#238a5e;
+  --good:#238a5e; --warn:#a96a0c; --bad:#c62f2f;
+  --code-bg:#12201b; --code-fg:#d6efe3; --grid:#cfd8d5; --canvas:#f1f4f3; --body-fill:#b9c5c1;
+  --display:'Space Grotesk',system-ui,sans-serif;
+  --body:'Inter',system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1513; --surface:#162120; --sunk:#0b1110; --line:#2a3b36; --fg:#e3eeea; --muted:#8ea39b;
+    --accent:#ff8a3d; --accent-fg:#1a0d03;
+    --left:#5aa2ff; --right:#ff8a3d; --third:#4fd39a;
+    --good:#4fd39a; --warn:#e6b04a; --bad:#ff6b6b;
+    --code-bg:#0a0f0e; --code-fg:#cfeee1; --grid:#22302c; --canvas:#101917; --body-fill:#31433e;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1513; --surface:#162120; --sunk:#0b1110; --line:#2a3b36; --fg:#e3eeea; --muted:#8ea39b;
+  --accent:#ff8a3d; --accent-fg:#1a0d03;
+  --left:#5aa2ff; --right:#ff8a3d; --third:#4fd39a;
+  --good:#4fd39a; --warn:#e6b04a; --bad:#ff6b6b;
+  --code-bg:#0a0f0e; --code-fg:#cfeee1; --grid:#22302c; --canvas:#101917; --body-fill:#31433e;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg); color:var(--fg); font:14px/1.5 var(--body);
+  padding-block:16px 48px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+}
+.app{max-width:1280px;margin:0 auto;display:grid;gap:16px;
+  grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);
+  grid-template-areas:"head head" "sim bench" "plots bench";align-items:start}
+@media (max-width:900px){
+  .app{grid-template-columns:minmax(0,1fr);grid-template-areas:"head" "sim" "bench" "plots"}
+}
+.head{grid-area:head;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px}
+h1{font:700 28px/1.1 var(--display);margin:0;letter-spacing:-0.01em}
+.head p{margin:0;color:var(--muted);max-width:70ch;min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px;min-width:0}
+.sim{grid-area:sim;display:flex;flex-direction:column;gap:12px}
+.plots{grid-area:plots}
+.bench{grid-area:bench;display:flex;flex-direction:column;gap:12px}
+h2{font:500 12px/1 var(--display);text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:0}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(86px,1fr));gap:8px}
+.stat{background:var(--sunk);border-radius:4px;padding:8px 10px;min-width:0}
+.stat span{display:block;font:500 11px/1.2 var(--display);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.stat b{display:block;font:500 18px/1.3 var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.stat b.warn{color:var(--warn)} .stat b.bad{color:var(--bad)} .stat b.good{color:var(--good)}
+canvas#view{width:100%;height:300px;display:block;background:var(--canvas);border-radius:4px;border:1px solid var(--line)}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button,select{font:500 13px/1 var(--body);color:var(--fg);background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:9px 12px;cursor:pointer;min-height:36px}
+button:hover{border-color:var(--muted)}
+button.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.bar label{color:var(--muted);display:flex;align-items:center;gap:6px;font-size:13px}
+.plotgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:12px}
+.plotcell{min-width:0}
+.plotcell header{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 10px;margin-bottom:4px;font-size:12px;color:var(--muted)}
+.plotcell header b{font:500 12px/1.4 var(--display);color:var(--fg)}
+.lg i{display:inline-block;width:9px;height:9px;margin:0 4px 0 8px;border-radius:1px;vertical-align:baseline}
+canvas.plot{width:100%;height:120px;display:block;background:var(--canvas);border:1px solid var(--line);border-radius:4px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tabs button{background:transparent;border:0;border-bottom:3px solid transparent;border-radius:0;padding:10px 12px;color:var(--muted);font:500 14px/1 var(--display)}
+.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+.pane{display:flex;flex-direction:column;gap:14px}
+.ctl{display:grid;grid-template-columns:minmax(90px,130px) minmax(0,1fr) 64px;gap:10px;align-items:center}
+.ctl label{font-weight:500}
+.ctl output{font:500 13px var(--mono);text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--accent);min-width:0;height:28px}
+.checks{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.checks label{display:flex;gap:8px;align-items:center;background:var(--sunk);padding:9px 10px;border-radius:4px;min-height:40px}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent)}
+.hint{color:var(--muted);font-size:13px;margin:0}
+.edit{display:flex;flex-direction:column;gap:10px}
+textarea#code{width:100%;min-height:380px;resize:vertical;background:var(--code-bg);color:var(--code-fg);border:1px solid var(--line);border-radius:4px;padding:12px;
+  font:13px/1.55 var(--mono);white-space:pre;overflow:auto;tab-size:2}
+.status{font:500 13px/1.4 var(--mono);padding:8px 10px;border-radius:4px;background:var(--sunk);min-width:0;overflow-wrap:anywhere}
+.status.ok{color:var(--good)} .status.err{color:var(--bad)}
+pre#console{margin:0;background:var(--code-bg);color:var(--code-fg);border-radius:4px;padding:10px;font:12px/1.5 var(--mono);height:110px;overflow:auto;white-space:pre-wrap}
+.conns{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.conn{background:var(--sunk);border-radius:4px;padding:10px 12px;min-width:0}
+.conn h3{margin:0 0 2px;font:700 15px/1.3 var(--display)}
+.conn p{margin:0 0 6px;font-size:12px;color:var(--muted)}
+.conn dl{margin:0;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 10px;font-size:13px}
+.conn dt{color:var(--muted);min-width:0}
+.conn dd{margin:0;font:500 13px var(--mono);text-align:right;font-variant-numeric:tabular-nums;min-width:0;overflow-wrap:anywhere}
+.conn .conn-wide{grid-column:1/-1}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="head">
+    <h1>Hoverlab</h1>
+    <p>Simulator für den Hoverboard-Umbau: zwei Hubmotoren, zwei Neigungsplatinen, eine Hauptplatine. Firmware ändern, neu starten, Verhalten messen.</p>
+  </header>
+
+  <section class="panel sim" aria-label="Simulation">
+    <div class="stats">
+      <div class="stat"><span>Tempo</span><b id="sSpeed">0,0 km/h</b></div>
+      <div class="stat"><span>Akku</span><b id="sBatt">0,0 V</b></div>
+      <div class="stat"><span>Strom</span><b id="sAmp">0,0 A</b></div>
+      <div class="stat"><span>Platine</span><b id="sState">läuft</b></div>
+    </div>
+    <canvas id="view" aria-label="Draufsicht auf das Fahrzeug"></canvas>
+    <div class="bar">
+      <button id="btnRun" class="primary">Pause</button>
+      <button id="btnReset">Fahrzeug zurücksetzen</button>
+      <label>Zeitlupe
+        <select id="speed">
+          <option value="0.25">0,25×</option>
+          <option value="1" selected>1×</option>
+          <option value="3">3×</option>
+        </select>
+      </label>
+    </div>
+    <p class="hint">Tasten: W/S Gas, A/D Lenkung (oder die Regler im Reiter Eingaben).</p>
+  </section>
+
+  <section class="panel bench" aria-label="Werkbank">
+    <div class="tabs" role="tablist">
+      <button role="tab" id="t-in" aria-selected="true" aria-controls="p-in">Eingaben</button>
+      <button role="tab" id="t-fw" aria-selected="false" aria-controls="p-fw">Firmware</button>
+      <button role="tab" id="t-io" aria-selected="false" aria-controls="p-io">Anschlüsse</button>
+    </div>
+
+    <div class="pane" id="p-in" role="tabpanel" aria-labelledby="t-in">
+      <div class="ctl"><label for="rThr">Gas</label><input id="rThr" type="range" min="-100" max="100" value="0"><output id="oThr">0</output></div>
+      <div class="ctl"><label for="rStr">Lenkung</label><input id="rStr" type="range" min="-100" max="100" value="0"><output id="oStr">0</output></div>
+      <div class="ctl"><label for="rPadL">Pad links</label><input id="rPadL" type="range" min="-20" max="20" step="0.5" value="0"><output id="oPadL">0°</output></div>
+      <div class="ctl"><label for="rPadR">Pad rechts</label><input id="rPadR" type="range" min="-20" max="20" step="0.5" value="0"><output id="oPadR">0°</output></div>
+      <div class="checks">
+        <label><input id="cFootL" type="checkbox" checked> Fußschalter links gedrückt</label>
+        <label><input id="cFootR" type="checkbox" checked> Fußschalter rechts gedrückt</label>
+        <label><input id="cHall" type="checkbox"> Hall-Sensor links defekt</label>
+      </div>
+      <div class="ctl"><label for="rLoad">Zuladung</label><input id="rLoad" type="range" min="0" max="110" value="60"><output id="oLoad">60 kg</output></div>
+      <div class="ctl"><label for="rSoc">Akkustand</label><input id="rSoc" type="range" min="0" max="100" value="85"><output id="oSoc">85 %</output></div>
+      <p class="hint">Gas und Lenkung gehören zur Kart-Firmware. Die Pads brauchst du für die Neigungs-Firmware. Lenkung: Plus ist rechts.</p>
+    </div>
+
+    <div class="edit" id="p-fw" role="tabpanel" aria-labelledby="t-fw" hidden>
+      <div class="bar">
+        <select id="preset" aria-label="Vorlage"></select>
+        <button id="btnApply" class="primary">Übernehmen und starten</button>
+      </div>
+      <textarea id="code" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Firmware-Code"></textarea>
+      <div class="status ok" id="fwStatus">Firmware läuft.</div>
+      <h2>Konsole</h2>
+      <pre id="console" aria-live="off"></pre>
+      <p class="hint">Diese Firmware ist JavaScript und läuft im Browser. Die echte C-Firmware kommt über das Build-Kit dazu.</p>
+    </div>
+
+    <div class="pane" id="p-io" role="tabpanel" aria-labelledby="t-io" hidden>
+      <div class="conns" id="conns"></div>
+      <p class="hint">Die Pinbelegung ist typisch für STM32F103-Boards mit der FOC-Firmware. Bitte an eurem Board gegenprüfen.</p>
+    </div>
+  </section>
+
+  <section class="panel plots" aria-label="Messkurven">
+    <h2>Messkurven der letzten 10 Sekunden</h2>
+    <div class="plotgrid">
+      <div class="plotcell"><header><b>Motorbefehl</b><span class="lg"><i style="background:var(--left)"></i>L<i style="background:var(--right)"></i>R</span></header><canvas class="plot" id="pCmd"></canvas></div>
+      <div class="plotcell"><header><b>Motorstrom in A</b><span class="lg"><i style="background:var(--left)"></i>L<i style="background:var(--right)"></i>R</span></header><canvas class="plot" id="pAmp"></canvas></div>
+      <div class="plotcell"><header><b>Tempo in km/h</b><span class="lg"><i style="background:var(--third)"></i>Fahrzeug</span></header><canvas class="plot" id="pSpd"></canvas></div>
+      <div class="plotcell"><header><b>Akkuspannung in V</b><span class="lg"><i style="background:var(--third)"></i>10S</span></header><canvas class="plot" id="pBat"></canvas></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+'use strict';
+var $=function(s){return document.querySelector(s)};
+var clamp=function(x,a,b){return Math.max(a,Math.min(b,x))};
+var TAU=Math.PI*2;
+function fmt(x,d){return x.toFixed(d).replace('.',',')}
+function hex2(n){return ('0'+(n&255).toString(16)).slice(-2).toUpperCase()}
+
+/* ---------- Fahrzeugdaten (Hoverboard-Hubmotoren, 10S) ---------- */
+var P={r:0.083,track:0.52,Kt:0.45,ke:0.45,R:0.55,pp:15,rint:0.18,capAh:4.4,imax:32};
+var HALL=[1,3,2,6,4,5];
+
+/* ---------- Firmware-Vorlagen ---------- */
+var HEADER=
+'// Hoverlab-Firmware (JavaScript). setup() läuft einmal, loop() 100-mal pro Sekunde.\n'+
+'// hw.in     Eingänge: throttle, steer (-1 links ... +1 rechts), padL, padR (Grad), footL, footR\n'+
+'// hw.sens   Sensoren: battV, battA, speedKmh, rpmL, rpmR, currL, currR, hallL, hallR, fault\n'+
+'// hw.out    Ausgänge: motorL, motorR (-1000..1000), currentLimit (A), led, buzzer, enable\n'+
+'// hw.state  Dein Speicher zwischen den Aufrufen.  hw.log(...) schreibt in die Konsole.\n\n';
+
+var PRESETS={
+kart:{name:'Kart mit Gas und Lenkung',src:HEADER+
+'const MAX_CMD = 700;     // maximale Motorstärke\n'+
+'const RAMP = 1800;       // Änderung pro Sekunde (Sanftanlauf)\n'+
+'const LOW_BATT_V = 33.0; // darunter wird die Leistung gekürzt\n\n'+
+'function approach(cur, target, step) {\n'+
+'  if (cur < target) return Math.min(cur + step, target);\n'+
+'  return Math.max(cur - step, target);\n'+
+'}\n\n'+
+'function setup(hw) {\n'+
+'  hw.state.cmdL = 0;\n'+
+'  hw.state.cmdR = 0;\n'+
+'  hw.out.currentLimit = 15;\n'+
+'}\n\n'+
+'function loop(hw, dt) {\n'+
+'  let limit = MAX_CMD;\n'+
+'  if (hw.sens.battV < LOW_BATT_V) {\n'+
+'    limit = MAX_CMD * 0.4;\n'+
+'    hw.out.buzzer = true;\n'+
+'  } else {\n'+
+'    hw.out.buzzer = false;\n'+
+'  }\n\n'+
+'  const thr = hw.in.throttle * limit;\n'+
+'  const str = hw.in.steer * limit * 0.5;\n'+
+'  const targetL = Math.max(-limit, Math.min(limit, thr + str));\n'+
+'  const targetR = Math.max(-limit, Math.min(limit, thr - str));\n\n'+
+'  hw.state.cmdL = approach(hw.state.cmdL, targetL, RAMP * dt);\n'+
+'  hw.state.cmdR = approach(hw.state.cmdR, targetR, RAMP * dt);\n\n'+
+'  hw.out.motorL = hw.state.cmdL;\n'+
+'  hw.out.motorR = hw.state.cmdR;\n'+
+'  hw.out.led = Math.abs(hw.state.cmdL) + Math.abs(hw.state.cmdR) > 50;\n'+
+'}\n'},
+pads:{name:'Neigungspads steuern',src:HEADER+
+'const DEAD = 3;      // Totzone in Grad\n'+
+'const FULL = 15;     // Neigung für Vollgas in Grad\n'+
+'const MAX_CMD = 600;\n'+
+'const RAMP = 1500;\n\n'+
+'function axis(angle) {\n'+
+'  if (Math.abs(angle) < DEAD) return 0;\n'+
+'  const a = angle - Math.sign(angle) * DEAD;\n'+
+'  return Math.max(-1, Math.min(1, a / (FULL - DEAD)));\n'+
+'}\n\n'+
+'function approach(cur, target, step) {\n'+
+'  if (cur < target) return Math.min(cur + step, target);\n'+
+'  return Math.max(cur - step, target);\n'+
+'}\n\n'+
+'function setup(hw) {\n'+
+'  hw.state.cmdL = 0;\n'+
+'  hw.state.cmdR = 0;\n'+
+'  hw.out.currentLimit = 12;\n'+
+'}\n\n'+
+'function loop(hw, dt) {\n'+
+'  const standing = hw.in.footL && hw.in.footR;\n'+
+'  let targetL = 0, targetR = 0;\n\n'+
+'  if (standing) {\n'+
+'    const thr = axis((hw.in.padL + hw.in.padR) / 2);\n'+
+'    const str = Math.max(-1, Math.min(1, (hw.in.padL - hw.in.padR) / 20));\n'+
+'    targetL = (thr + str) * MAX_CMD;\n'+
+'    targetR = (thr - str) * MAX_CMD;\n'+
+'  }\n\n'+
+'  const step = (standing ? RAMP : RAMP * 2) * dt;\n'+
+'  hw.state.cmdL = approach(hw.state.cmdL, targetL, step);\n'+
+'  hw.state.cmdR = approach(hw.state.cmdR, targetR, step);\n'+
+'  hw.out.motorL = hw.state.cmdL;\n'+
+'  hw.out.motorR = hw.state.cmdR;\n'+
+'  hw.out.led = standing;\n'+
+'  hw.out.buzzer = !standing && Math.abs(hw.sens.speedKmh) > 2;\n'+
+'}\n'},
+blank:{name:'Leere Vorlage',src:HEADER+
+'function setup(hw) {\n'+
+'  hw.out.currentLimit = 10;\n'+
+'}\n\n'+
+'function loop(hw, dt) {\n'+
+'  // Hier eigene Logik schreiben. Beispiel: Motoren mit Gas ansteuern.\n'+
+'  hw.out.motorL = hw.in.throttle * 300;\n'+
+'  hw.out.motorR = hw.in.throttle * 300;\n'+
+'}\n'}
+};
+
+/* ---------- Zustand ---------- */
+var S,hw,fw={loop:null,setup:null,ok:false,halted:false},ui={paused:false,speed:1};
+var buf=[],trail=[],logLines=[],logDirty=false,logCount=0,logWindow=0;
+var keys={};
+
+function newOut(){return {motorL:0,motorR:0,currentLimit:15,led:false,buzzer:false,enable:true}}
+function resetVehicle(){
+  S={t:0,x:0,y:0,h:0,v:0,w:0,angL:0,angR:0,soc:Number($('#rSoc').value)/100,vbat:40,ibatt:0,iL:0,iR:0,vL:0,vR:0,faultT:0,tripT:0};
+  buf=[];trail=[];
+}
+function initHw(){
+  hw={in:{throttle:0,steer:0,padL:0,padR:0,footL:true,footR:true},
+      sens:{battV:40,battA:0,speedKmh:0,rpmL:0,rpmR:0,currL:0,currR:0,hallL:0,hallR:0,fault:false},
+      out:newOut(),state:{},t:0,
+      log:function(){
+        var a=Array.prototype.slice.call(arguments).map(function(x){return typeof x==='number'?String(Math.round(x*1000)/1000):String(x)}).join(' ');
+        if(logWindow>=40)return; logWindow++;
+        logLines.push(fmt(S.t,2).replace(',','.')+'s  '+a); if(logLines.length>60)logLines.shift(); logDirty=true;
+      }};
+}
+
+/* ---------- Firmware laden ---------- */
+function setStatus(msg,ok){var e=$('#fwStatus');e.textContent=msg;e.className='status '+(ok?'ok':'err')}
+function compile(src){
+  window.__hlFw=null;
+  var errMsg=null,errLine=null;
+  var h=function(e){errMsg=e.message;errLine=e.lineno;e.preventDefault()};
+  window.addEventListener('error',h);
+  var s=document.createElement('script');
+  s.textContent='(function(){\n'+src+'\n;window.__hlFw={setup:typeof setup==="function"?setup:null,loop:typeof loop==="function"?loop:null};})();';
+  document.head.appendChild(s);
+  s.remove();
+  window.removeEventListener('error',h);
+  if(errMsg)return {error:errMsg,line:errLine?errLine-1:null};
+  return {fw:window.__hlFw};
+}
+function applyFirmware(){
+  var src=$('#code').value;
+  try{localStorage.setItem('hoverlab-src',src)}catch(e){}
+  var r=compile(src);
+  if(r.error||!r.fw){
+    fw.ok=false;fw.halted=true;
+    setStatus('Fehler'+(r.line?' in Zeile '+r.line:'')+': '+(r.error||'Code konnte nicht geladen werden'),false);
+    return;
+  }
+  if(!r.fw.loop){fw.ok=false;fw.halted=true;setStatus('Es fehlt die Funktion loop(hw, dt).',false);return}
+  initHw();
+  fw=r.fw;fw.ok=true;fw.halted=false;
+  logLines=[];logDirty=true;
+  try{if(fw.setup)fw.setup(hw)}catch(e){haltFw(e);return}
+  setStatus('Firmware läuft.',true);
+}
+function haltFw(e){
+  fw.halted=true;hw.out.motorL=0;hw.out.motorR=0;
+  setStatus('Laufzeitfehler: '+(e&&e.message?e.message:e)+'. Motoren aus. Code ändern und neu starten.',false);
+}
+
+/* ---------- Eingänge ---------- */
+function readInputs(){
+  var thr=Number($('#rThr').value)/100,str=Number($('#rStr').value)/100;
+  if(keys.w||keys.arrowup)thr=1; else if(keys.s||keys.arrowdown)thr=-1;
+  if(keys.d||keys.arrowright)str=1; else if(keys.a||keys.arrowleft)str=-1;
+  hw.in.throttle=thr;hw.in.steer=str;
+  hw.in.padL=Number($('#rPadL').value);hw.in.padR=Number($('#rPadR').value);
+  hw.in.footL=$('#cFootL').checked;hw.in.footR=$('#cFootR').checked;
+}
+function hallBits(ang){
+  var e=((ang*P.pp)%TAU+TAU)%TAU;
+  return HALL[Math.floor(e/TAU*6)%6];
+}
+function readSensors(){
+  var s=hw.sens;
+  s.battV=S.vbat;s.battA=S.ibatt;s.speedKmh=S.v*3.6;
+  s.rpmL=S.vL/P.r*60/TAU;s.rpmR=S.vR/P.r*60/TAU;
+  s.currL=S.iL;s.currR=S.iR;
+  s.hallL=$('#cHall').checked?0:hallBits(S.angL);
+  s.hallR=hallBits(S.angR);
+  s.fault=S.faultT>0;
+}
+
+/* ---------- Physik ---------- */
+function physStep(dt){
+  var m=12+Number($('#rLoad').value);
+  var voc=31+11*S.soc;
+  var Vb=Math.max(5,voc-P.rint*S.ibatt);
+  S.vbat=Vb;
+  S.vL=S.v-S.w*P.track/2;S.vR=S.v+S.w*P.track/2;
+  var o=hw.out;
+  var en=S.faultT<=0&&o.enable!==false;
+  var lim=clamp(Number(o.currentLimit)||0,0,40);
+  var uL=en?clamp(Number(o.motorL)||0,-1000,1000)/1000:0;
+  var uR=en?clamp(Number(o.motorR)||0,-1000,1000)/1000:0;
+  var iL=(uL*Vb-P.ke*S.vL/P.r)/P.R;
+  var iR=(uR*Vb-P.ke*S.vR/P.r)/P.R;
+  iL=clamp(iL,-lim,lim);iR=clamp(iR,-lim,lim);
+  if(!en){iL=0;iR=0}
+  if(Math.max(Math.abs(iL),Math.abs(iR))>P.imax){
+    S.tripT+=dt;
+    if(S.tripT>0.05){S.faultT=1.5;S.tripT=0}
+  }else S.tripT=Math.max(0,S.tripT-dt);
+  if(S.faultT>0)S.faultT-=dt;
+  S.iL=iL;S.iR=iR;
+  var FL=P.Kt*iL/P.r,FR=P.Kt*iR/P.r;
+  var drag=0.015*m*9.81*Math.tanh(S.v/0.05)+0.25*S.v*Math.abs(S.v);
+  var a=(FL+FR-drag)/m;
+  var Iz=m*0.22;
+  var torque=(FR-FL)*P.track/2-6*S.w-3*Math.tanh(S.w/0.2);
+  S.v+=a*dt;S.w+=torque/Iz*dt;
+  S.angL+=S.vL/P.r*dt;S.angR+=S.vR/P.r*dt;
+  S.h+=S.w*dt;
+  S.x+=S.v*Math.cos(S.h)*dt;S.y+=S.v*Math.sin(S.h)*dt;
+  S.ibatt=uL*iL+uR*iR+0.4;
+  S.soc=clamp(S.soc-S.ibatt*dt/3600/P.capAh,0,1);
+}
+
+var fwAcc=0,sampAcc=0,trailAcc=0;
+function runFw(){
+  if(!fw.ok||fw.halted)return;
+  readInputs();readSensors();hw.t=S.t;
+  try{fw.loop(hw,0.01)}catch(e){haltFw(e)}
+}
+function stepAll(dt){
+  S.t+=dt;fwAcc+=dt;
+  if(fwAcc>=0.01){fwAcc-=0.01;runFw()}
+  physStep(dt);
+  sampAcc+=dt;
+  if(sampAcc>=0.02){
+    sampAcc-=0.02;
+    buf.push({uL:Number(hw.out.motorL)||0,uR:Number(hw.out.motorR)||0,iL:S.iL,iR:S.iR,spd:S.v*3.6,vb:S.vbat});
+    if(buf.length>500)buf.shift();
+  }
+  trailAcc+=dt;
+  if(trailAcc>=0.1){trailAcc-=0.1;trail.push([S.x,S.y]);if(trail.length>400)trail.shift()}
+}
+
+/* ---------- Zeichnen: Draufsicht ---------- */
+function css(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+function sizeCanvas(cv){
+  var dpr=window.devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight;
+  if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr)}
+  var c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);return {c:c,w:w,h:h};
+}
+function drawView(col){
+  var cv=$('#view'),z=sizeCanvas(cv),c=z.c,w=z.w,h=z.h,sc=70;
+  c.clearRect(0,0,w,h);
+  c.strokeStyle=col.grid;c.lineWidth=1;c.beginPath();
+  var ox=(w/2)-S.x*sc,oy=(h/2)+S.y*sc;
+  var x0=((ox%sc)+sc)%sc,y0=((oy%sc)+sc)%sc,i;
+  for(i=x0;i<w;i+=sc){c.moveTo(i+.5,0);c.lineTo(i+.5,h)}
+  for(i=y0;i<h;i+=sc){c.moveTo(0,i+.5);c.lineTo(w,i+.5)}
+  c.stroke();
+  c.fillStyle=col.muted;c.font='11px '+col.mono;c.fillText('Raster: 1 m',8,h-8);
+  c.strokeStyle=col.third;c.globalAlpha=.55;c.lineWidth=2;c.beginPath();
+  for(i=0;i<trail.length;i++){
+    var tx=ox+trail[i][0]*sc,ty=oy-trail[i][1]*sc;
+    if(i===0)c.moveTo(tx,ty);else c.lineTo(tx,ty);
+  }
+  c.stroke();c.globalAlpha=1;
+  c.save();c.translate(w/2,h/2);c.rotate(-S.h);
+  function R(lx,ly,lw,lh,fill,rad){
+    c.fillStyle=fill;c.beginPath();
+    var px=(lx-lw/2)*sc,py=-(ly+lh/2)*sc;
+    if(c.roundRect)c.roundRect(px,py,lw*sc,lh*sc,rad||2);else c.rect(px,py,lw*sc,lh*sc);
+    c.fill();
+  }
+  var wl=0.17*sc,ww=0.07;
+  R(0,0,0.3,P.track+0.04,col.bodyFill,4);
+  var aL=clamp(Math.abs(S.iL)/15,0,1),aR=clamp(Math.abs(S.iR)/15,0,1);
+  c.globalAlpha=.35+.65*aL;R(0,P.track/2+0.04,0.17,ww+0.03,col.left,2);
+  c.globalAlpha=.35+.65*aR;R(0,-P.track/2-0.04,0.17,ww+0.03,col.right,2);
+  c.globalAlpha=1;
+  c.fillStyle=col.fg;c.beginPath();c.moveTo(0.34*sc,0);c.lineTo(0.2*sc,-0.07*sc);c.lineTo(0.2*sc,0.07*sc);c.closePath();c.fill();
+  c.fillStyle=col.muted;c.font='bold 11px '+col.mono;c.textAlign='center';
+  c.save();c.rotate(S.h);c.restore();
+  c.restore();
+  c.fillStyle=hw.out.led?col.good:col.muted;c.beginPath();c.arc(w-18,18,6,0,TAU);c.fill();
+  if(S.faultT>0){c.fillStyle=col.bad;c.font='500 13px '+col.mono;c.textAlign='right';c.fillText('Überstromschutz aktiv',w-32,22)}
+  else if(hw.out.buzzer){c.fillStyle=col.warn;c.font='500 13px '+col.mono;c.textAlign='right';c.fillText('Summer an',w-32,22)}
+  c.textAlign='left';
+}
+
+/* ---------- Zeichnen: Messkurven ---------- */
+function drawPlot(id,keysArr,colArr,opt,col){
+  var cv=$(id),z=sizeCanvas(cv),c=z.c,w=z.w,h=z.h;
+  c.clearRect(0,0,w,h);
+  var L=38,Rm=6,T=8,B=8,pw=w-L-Rm,ph=h-T-B,lo,hi,k,i;
+  if(opt.fixed){lo=opt.fixed[0];hi=opt.fixed[1]}
+  else{
+    var mx=opt.minSpan;
+    for(k=0;k<keysArr.length;k++)for(i=0;i<buf.length;i++)mx=Math.max(mx,Math.abs(buf[i][keysArr[k]]));
+    mx=Math.ceil(mx*1.1);lo=-mx;hi=mx;
+  }
+  function Y(v){return T+ph-(v-lo)/(hi-lo)*ph}
+  c.font='10px '+col.mono;c.textBaseline='middle';
+  var ticks=[lo,(lo+hi)/2,hi];
+  for(i=0;i<3;i++){
+    var yy=Y(ticks[i]);
+    c.strokeStyle=col.grid;c.lineWidth=1;c.beginPath();c.moveTo(L,Math.round(yy)+.5);c.lineTo(w-Rm,Math.round(yy)+.5);c.stroke();
+    c.fillStyle=col.muted;c.textAlign='right';c.fillText(Math.abs(ticks[i])>=100?String(Math.round(ticks[i])):fmt(ticks[i],Math.abs(ticks[i])<10&&ticks[i]%1!==0?1:0),L-5,yy);
+  }
+  if(lo<0&&hi>0){c.strokeStyle=col.muted;c.globalAlpha=.6;c.beginPath();c.moveTo(L,Math.round(Y(0))+.5);c.lineTo(w-Rm,Math.round(Y(0))+.5);c.stroke();c.globalAlpha=1}
+  var N=500;
+  for(k=0;k<keysArr.length;k++){
+    c.strokeStyle=colArr[k];c.lineWidth=1.75;c.beginPath();
+    for(i=0;i<buf.length;i++){
+      var px=L+(i+(N-buf.length))/(N-1)*pw,py=Y(clamp(buf[i][keysArr[k]],lo,hi));
+      if(i===0)c.moveTo(px,py);else c.lineTo(px,py);
+    }
+    c.stroke();
+  }
+}
+
+/* ---------- Anschlüsse ---------- */
+var CONNS=[
+ {t:'Akku',s:'10S Li-Ion, 36 V Nennspannung',r:[['BAT+ / BAT−','bat_v'],['Strom','bat_a'],['Ladestand','bat_soc']]},
+ {t:'Motor links',s:'Phasen A/B/C (gelb, blau, grün), Hall und 5 V',r:[['Phasen A/B/C Duty','mL_duty'],['Phasenstrom','mL_a'],['Hall A/B/C','mL_hall'],['Drehzahl','mL_rpm']]},
+ {t:'Motor rechts',s:'Phasen A/B/C (gelb, blau, grün), Hall und 5 V',r:[['Phasen A/B/C Duty','mR_duty'],['Phasenstrom','mR_a'],['Hall A/B/C','mR_hall'],['Drehzahl','mR_rpm']]},
+ {t:'Neigungsplatine links',s:'Kabel zu USART2: PA2 (TX), PA3 (RX)',r:[['Neigung','pL_ang'],['Fußschalter','pL_foot'],['Beispiel-Telegramm','pL_frame']]},
+ {t:'Neigungsplatine rechts',s:'Kabel zu USART3: PB10 (TX), PB11 (RX)',r:[['Neigung','pR_ang'],['Fußschalter','pR_foot'],['Beispiel-Telegramm','pR_frame']]},
+ {t:'Ausgänge',s:'LED, Summer, Überstromschutz',r:[['LED','o_led'],['Summer','o_buz'],['Stromgrenze','o_lim'],['Überstromschutz','o_fault']]},
+ {t:'Programmieranschluss',s:'SWD für den ST-Link: SWDIO, SWCLK, GND, 3,3 V',r:[['Zum Flashen der echten Firmware','swd']]}
+];
+function buildConns(){
+  var h='';
+  CONNS.forEach(function(cn){
+    h+='<div class="conn"><h3>'+cn.t+'</h3><p>'+cn.s+'</p><dl>';
+    cn.r.forEach(function(r){h+='<dt>'+r[0]+'</dt><dd data-k="'+r[1]+'">–</dd>'});
+    h+='</dl></div>';
+  });
+  $('#conns').innerHTML=h;
+}
+function bits(n){return ((n>>2)&1)+' '+((n>>1)&1)+' '+(n&1)}
+function frameHex(angle,foot){
+  var a=Math.round(angle*100),hi=(a>>8)&255,lo=a&255,f=foot?1:0;
+  return 'AB '+hex2(hi)+' '+hex2(lo)+' 0'+f+' '+hex2(0xAB^hi^lo^f);
+}
+function updateConns(){
+  var o=hw.out,s=hw.sens;
+  var V={
+    bat_v:fmt(S.vbat,1)+' V',bat_a:fmt(S.ibatt,1)+' A',bat_soc:fmt(S.soc*100,0)+' %',
+    mL_duty:fmt((Number(o.motorL)||0)/10,0)+' %',mL_a:fmt(S.iL,1)+' A',mL_hall:$('#cHall').checked?'defekt':bits(hallBits(S.angL)),mL_rpm:fmt(s.rpmL,0)+' min⁻¹',
+    mR_duty:fmt((Number(o.motorR)||0)/10,0)+' %',mR_a:fmt(S.iR,1)+' A',mR_hall:bits(hallBits(S.angR)),mR_rpm:fmt(s.rpmR,0)+' min⁻¹',
+    pL_ang:fmt(hw.in.padL,1)+'°',pL_foot:hw.in.footL?'gedrückt':'frei',pL_frame:frameHex(hw.in.padL,hw.in.footL),
+    pR_ang:fmt(hw.in.padR,1)+'°',pR_foot:hw.in.footR?'gedrückt':'frei',pR_frame:frameHex(hw.in.padR,hw.in.footR),
+    o_led:o.led?'an':'aus',o_buz:o.buzzer?'an':'aus',o_lim:fmt(Number(o.currentLimit)||0,0)+' A',o_fault:S.faultT>0?'ausgelöst':'ok',
+    swd:'nicht verbunden'
+  };
+  var els=document.querySelectorAll('#conns dd');
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute('data-k');if(V[k]!==undefined&&els[i].textContent!==V[k])els[i].textContent=V[k]}
+}
+function updateStats(){
+  $('#sSpeed').textContent=fmt(S.v*3.6,1)+' km/h';
+  var b=$('#sBatt');b.textContent=fmt(S.vbat,1)+' V';b.className=S.vbat<33?'warn':'';
+  $('#sAmp').textContent=fmt(S.ibatt,1)+' A';
+  var st=$('#sState');
+  if(S.faultT>0){st.textContent='Überstrom';st.className='bad'}
+  else if(fw.halted){st.textContent='Fehler';st.className='bad'}
+  else{st.textContent='läuft';st.className='good'}
+}
+
+/* ---------- Hauptschleife ---------- */
+var last=performance.now(),slow=0;
+function frame(now){
+  var real=Math.min(0.05,(now-last)/1000);last=now;
+  if(!ui.paused){
+    var acc=real*ui.speed,dt=0.0025,n=0;
+    acc=Math.round(acc/dt)*dt;
+    while(n<Math.round(real*ui.speed/dt)&&n<200){stepAll(dt);n++}
+  }
+  slow+=real;
+  var col={grid:css('--grid'),muted:css('--muted'),fg:css('--fg'),left:css('--left'),right:css('--right'),third:css('--third'),good:css('--good'),warn:css('--warn'),bad:css('--bad'),bodyFill:css('--body-fill'),mono:"'JetBrains Mono',monospace"};
+  drawView(col);
+  if(slow>=0.1){
+    slow=0;logWindow=0;
+    drawPlot('#pCmd',['uL','uR'],[col.left,col.right],{fixed:[-1000,1000]},col);
+    drawPlot('#pAmp',['iL','iR'],[col.left,col.right],{minSpan:5},col);
+    drawPlot('#pSpd',['spd'],[col.third],{minSpan:4},col);
+    drawPlot('#pBat',['vb'],[col.third],{fixed:[28,43]},col);
+    updateStats();
+    if(!$('#p-io').hidden)updateConns();
+    if(logDirty){logDirty=false;var pc=$('#console');pc.textContent=logLines.join('\n');pc.scrollTop=pc.scrollHeight}
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ---------- Bedienung ---------- */
+function bind(id,out,suffix){
+  var r=$(id),o=$(out);
+  function u(){o.textContent=r.value+suffix}
+  r.addEventListener('input',u);u();
+}
+bind('#rThr','#oThr','');bind('#rStr','#oStr','');
+bind('#rPadL','#oPadL','°');bind('#rPadR','#oPadR','°');
+bind('#rLoad','#oLoad',' kg');bind('#rSoc','#oSoc',' %');
+$('#rSoc').addEventListener('input',function(){S.soc=Number($('#rSoc').value)/100});
+
+var tabs=['in','fw','io'];
+tabs.forEach(function(t){
+  $('#t-'+t).addEventListener('click',function(){
+    tabs.forEach(function(x){
+      var on=x===t;$('#t-'+x).setAttribute('aria-selected',on?'true':'false');$('#p-'+x).hidden=!on;
+    });
+    if(t==='io')updateConns();
+  });
+});
+
+var sel=$('#preset');
+Object.keys(PRESETS).forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=PRESETS[k].name;sel.appendChild(o)});
+sel.addEventListener('change',function(){$('#code').value=PRESETS[sel.value].src;applyFirmware()});
+$('#btnApply').addEventListener('click',function(){applyFirmware()});
+$('#code').addEventListener('keydown',function(e){
+  if(e.key==='Tab'){
+    e.preventDefault();var t=e.target,s=t.selectionStart;
+    t.value=t.value.slice(0,s)+'  '+t.value.slice(t.selectionEnd);t.selectionStart=t.selectionEnd=s+2;
+  }
+});
+$('#btnRun').addEventListener('click',function(){ui.paused=!ui.paused;this.textContent=ui.paused?'Weiter':'Pause'});
+$('#btnReset').addEventListener('click',function(){resetVehicle()});
+$('#speed').addEventListener('change',function(){ui.speed=Number(this.value)});
+window.addEventListener('keydown',function(e){
+  var tg=e.target&&e.target.tagName;if(tg==='TEXTAREA'||tg==='INPUT'||tg==='SELECT')return;
+  var k=e.key.toLowerCase();
+  if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].indexOf(k)>=0){keys[k]=true;e.preventDefault()}
+});
+window.addEventListener('keyup',function(e){keys[e.key.toLowerCase()]=false});
+window.addEventListener('blur',function(){keys={}});
+
+/* ---------- Start ---------- */
+buildConns();
+initHw();resetVehicle();
+var saved=null;try{saved=localStorage.getItem('hoverlab-src')}catch(e){}
+$('#code').value=saved||PRESETS.kart.src;
+applyFirmware();
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
