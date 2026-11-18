@@ -83,7 +83,18 @@ button:disabled{opacity:.5;cursor:not-allowed}
 input[type=text]{font:13px/1 var(--body);color:var(--fg);background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:9px 10px;min-height:36px;min-width:0;flex:1 1 130px}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .bar label{color:var(--muted);display:flex;align-items:center;gap:6px;font-size:13px}
-.bar select#proj{flex:1 1 160px;min-width:0}
+.projbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-left:auto}
+.projbar label{color:var(--muted);font-size:13px}
+.projbar select{min-width:170px;max-width:100%}
+.ver{font:500 12px var(--mono);color:var(--muted)}
+details.cfgbox{background:var(--sunk);border-radius:4px;padding:10px 12px}
+details.cfgbox summary{cursor:pointer;font:500 13px var(--display)}
+details.cfgbox[open] summary{margin-bottom:10px}
+details.cfgbox .bar{margin-top:8px}
+textarea#cfg,textarea#xfer{width:100%;min-height:150px;resize:vertical;background:var(--code-bg);color:var(--code-fg);border:1px solid var(--line);border-radius:4px;padding:10px;font:12px/1.5 var(--mono);white-space:pre;overflow:auto;tab-size:2}
+#cfgStatus{white-space:pre-wrap;margin-top:8px}
+.foot{color:var(--muted);font-size:12px;max-width:1280px;margin:16px auto 0}
+.foot a{color:var(--fg)}
 .plotgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:12px}
 .plotcell{min-width:0}
 .plotcell header{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 10px;margin-bottom:4px;font-size:12px;color:var(--muted)}
@@ -122,6 +133,12 @@ pre#console{margin:0;background:var(--code-bg);color:var(--code-fg);border-radiu
   <header class="head">
     <h1>Hoverlab</h1>
     <p>Simulator für den Hoverboard-Umbau: zwei Hubmotoren, zwei Neigungsplatinen, eine Hauptplatine. Firmware ändern, neu starten, Verhalten messen.</p>
+    <div class="projbar">
+      <label for="proj">Projekt</label>
+      <select id="proj"></select>
+      <button id="btnOpenFw" type="button">Code bearbeiten</button>
+      <span class="ver">Version 3</span>
+    </div>
   </header>
 
   <section class="panel sim" aria-label="Simulation">
@@ -174,13 +191,11 @@ pre#console{margin:0;background:var(--code-bg);color:var(--code-fg);border-radiu
       </div>
       <div class="ctl"><label for="rLoad">Zuladung</label><input id="rLoad" type="range" min="0" max="110" value="60"><output id="oLoad">60 kg</output></div>
       <div class="ctl"><label for="rSoc">Akkustand</label><input id="rSoc" type="range" min="0" max="100" value="85"><output id="oSoc">85 %</output></div>
-      <p class="hint">Gas und Lenkung gehören zur Kart-Firmware. Die Pads brauchst du für die Neigungs-Firmware. Lenkung: Plus ist rechts.</p>
+      <p class="hint">Gas und Lenkung gehören zur Kart-Firmware und zur Variante ADC. Die Pads brauchst du für die Neigungs-Firmware und die Variante HOVERBOARD. Lenkung: Plus ist rechts.</p>
     </div>
 
     <div class="edit" id="p-fw" role="tabpanel" aria-labelledby="t-fw" hidden>
       <div class="bar">
-        <label for="proj">Projekt</label>
-        <select id="proj"></select>
         <button id="btnApply" class="primary">Übernehmen und starten</button>
       </div>
       <div class="bar">
@@ -189,15 +204,23 @@ pre#console{margin:0;background:var(--code-bg);color:var(--code-fg);border-radiu
         <button id="btnNew">Neu aus Vorlage</button>
         <button id="btnCopy">Kopie speichern</button>
       </div>
+      <details class="cfgbox" id="cfgBox">
+        <summary>config.h aus deinem echten Projekt</summary>
+        <textarea id="cfg" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Inhalt der config.h"></textarea>
+        <div class="bar"><button id="btnCfg">config.h übernehmen</button></div>
+        <div class="status ok" id="cfgStatus">–</div>
+      </details>
       <textarea id="code" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Firmware-Code"></textarea>
       <div class="status ok" id="fwStatus">Firmware läuft.</div>
       <div class="bar">
         <button id="btnDel">Projekt löschen</button>
         <button id="btnExp">Exportieren</button>
-        <button id="btnImp">Importieren</button>
+        <button id="btnImp">Datei importieren</button>
+        <button id="btnImpTxt">Aus Textfeld importieren</button>
         <input id="fileImp" type="file" accept="application/json,.json" hidden>
       </div>
-      <p class="hint" id="projHint">Projekte werden automatisch in diesem Browser gespeichert. Mit Exportieren sicherst du sie als Datei.</p>
+      <textarea id="xfer" spellcheck="false" aria-label="Export und Import als Text" hidden></textarea>
+      <p class="hint" id="projHint">Projekte werden automatisch in diesem Browser gespeichert. Mit Exportieren sicherst du sie als Text.</p>
       <h2>Konsole</h2>
       <pre id="console" aria-live="off"></pre>
       <p class="hint">Diese Firmware ist JavaScript und läuft im Browser. Die echte C-Firmware kommt über das Build-Kit dazu.</p>
@@ -219,6 +242,7 @@ pre#console{margin:0;background:var(--code-bg);color:var(--code-fg);border-radiu
     </div>
   </section>
 </div>
+<p class="foot">Die Vorlagen "Original" sind ein Port der Befehlskette aus <a href="https://github.com/EFeru/hoverboard-firmware-hack-FOC" target="_blank" rel="noopener">hoverboard-firmware-hack-FOC</a> von Emanuel Feru und Mitwirkenden, Lizenz GPL-3.0. Der Simulink-Regler der Motoren ist nicht nachgebildet.</p>
 
 <script>
 (function(){
@@ -229,17 +253,105 @@ var TAU=Math.PI*2;
 function fmt(x,d){return x.toFixed(d).replace('.',',')}
 function hex2(n){return ('0'+(n&255).toString(16)).slice(-2).toUpperCase()}
 
+/* Mini-Präprozessor für config.h: liest #define, #if, #ifdef, #else, #endif und wertet Ausdrücke aus. */
+function hlParseConfig(text){
+  var defs={},notes=[];
+  var has=function(n){return Object.prototype.hasOwnProperty.call(defs,n)};
+  function evalExpr(expr,depth){
+    if(depth>25)return NaN;
+    var src=String(expr).replace(/defined\s*\(\s*(\w+)\s*\)|defined\s+(\w+)/g,function(m,a,b){return has(a||b)?'1':'0'});
+    src=src.replace(/0[xX][0-9a-fA-F]+[uUlL]*|\d+\.?\d*(?:[eE][+-]?\d+)?[fFuUlL]*|[A-Za-z_]\w*/g,function(tok){
+      if(/^0[xX]/.test(tok))return String(parseInt(tok,16));
+      if(/^\d/.test(tok))return String(parseFloat(tok));
+      if(has(tok)){
+        var b=defs[tok].trim();
+        if(b==='')return '1';
+        var v=evalExpr(b,depth+1);
+        return isNaN(v)?'0':'('+v+')';
+      }
+      return '0';
+    });
+    if(!/^[\d\s+\-*\/%()<>=!&|?:.,~^eE]*$/.test(src))return NaN;
+    try{var r=Function('"use strict";return ('+src+')')();return Number(r)}catch(e){return NaN}
+  }
+  var clean=String(text).replace(/\r/g,'').replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g,' ').replace(/\\\n/g,' ');
+  var lines=clean.split('\n'),stack=[],active=true;
+  function recompute(){active=true;for(var i=0;i<stack.length;i++){if(!stack[i].cond){active=false;break}}}
+  lines.forEach(function(line){
+    var m=/^\s*#\s*(\w+)\s*(.*)$/.exec(line);if(!m)return;
+    var d=m[1],rest=m[2].trim(),top=stack[stack.length-1];
+    if(d==='if'||d==='ifdef'||d==='ifndef'){
+      var c;
+      if(d==='ifdef')c=has(rest.split(/\s/)[0]);
+      else if(d==='ifndef')c=!has(rest.split(/\s/)[0]);
+      else{var v=evalExpr(rest,0);c=!isNaN(v)&&v!==0}
+      var parentOn=active;
+      stack.push({cond:c,done:c,parentOn:parentOn});recompute();
+    }else if(d==='elif'){
+      if(top){if(top.done)top.cond=false;else{var v2=evalExpr(rest,0);top.cond=!isNaN(v2)&&v2!==0;top.done=top.cond}recompute()}
+    }else if(d==='else'){
+      if(top){top.cond=!top.done;top.done=true;recompute()}
+    }else if(d==='endif'){
+      stack.pop();recompute();
+    }else if(active&&d==='define'){
+      var dm=/^(\w+)(\()?\s*(.*)$/.exec(rest);
+      if(dm&&!dm[2])defs[dm[1]]=dm[3];
+    }else if(active&&d==='undef'){
+      delete defs[rest.split(/\s/)[0]];
+    }
+  });
+  function val(n,def){if(!has(n))return def;var v=evalExpr(defs[n]===''?'1':defs[n],0);return isNaN(v)?def:v}
+  var VARS=['ADC','USART','NUNCHUK','PPM','PWM','IBUS','HOVERCAR','HOVERBOARD','TRANSPOTTER','SKATEBOARD'];
+  var variant='';
+  for(var i=0;i<VARS.length;i++){if(has('VARIANT_'+VARS[i])){variant=VARS[i];break}}
+  var fwe=val('FIELD_WEAK_ENA',0)?1:0,fwh=val('FIELD_WEAK_HI',1000);
+  var cfg={
+    variant:variant,
+    RATE:val('RATE',val('DEFAULT_RATE',480)),
+    FILTER:val('FILTER',val('DEFAULT_FILTER',6553)),
+    SPEED_COEFFICIENT:val('SPEED_COEFFICIENT',val('DEFAULT_SPEED_COEFFICIENT',16384)),
+    STEER_COEFFICIENT:val('STEER_COEFFICIENT',val('DEFAULT_STEER_COEFFICIENT',8192)),
+    INPUT_MIN:fwe?Math.min(-1000,-fwh):-1000,
+    INPUT_MAX:fwe?Math.max(1000,fwh):1000,
+    I_MOT_MAX:val('I_MOT_MAX',15),
+    N_MOT_MAX:val('N_MOT_MAX',1000),
+    CTRL_MOD_REQ:'VLT_MODE',
+    TANK_STEERING:has('TANK_STEERING'),
+    INVERT_L_DIRECTION:has('INVERT_L_DIRECTION'),
+    INVERT_R_DIRECTION:has('INVERT_R_DIRECTION'),
+    DELAY_IN_MAIN_LOOP:val('DELAY_IN_MAIN_LOOP',5),
+    BAT_CELLS:val('BAT_CELLS',10),
+    defs:{}
+  };
+  var modes={0:'OPEN_MODE',1:'VLT_MODE',2:'SPD_MODE',3:'TRQ_MODE'};
+  cfg.CTRL_MOD_REQ=modes[val('CTRL_MOD_REQ',1)]||'VLT_MODE';
+  Object.keys(defs).forEach(function(k){var v=evalExpr(defs[k]===''?'1':defs[k],0);if(!isNaN(v))cfg.defs[k]=v});
+  cfg.DELAY_IN_MAIN_LOOP=clamp(cfg.DELAY_IN_MAIN_LOOP,1,50);
+  function clamp(x,a,b){return Math.max(a,Math.min(b,x))}
+  if(!variant)notes.push('Keine Variante aktiv, es gilt die Standardkette.');
+  if(variant==='TRANSPOTTER')notes.push('Die Variante TRANSPOTTER ist nicht nachgebildet.');
+  if(variant==='HOVERCAR'||variant==='SKATEBOARD')notes.push('Bremspedal- und Skateboard-Logik sind nicht nachgebildet, es läuft die Standardkette.');
+  if(cfg.CTRL_MOD_REQ!=='VLT_MODE')notes.push(cfg.CTRL_MOD_REQ+' wird als Spannungsmodus simuliert.');
+  return {cfg:cfg,notes:notes};
+}
+
+var PORT_SRC="// Port der Befehlskette aus hoverboard-firmware-hack-FOC (Src/main.c und Src/util.c)\n// Original: https://github.com/EFeru/hoverboard-firmware-hack-FOC, Lizenz GPL-3.0\n// Alle Werte (RATE, FILTER, Koeffizienten, Variante ...) kommen aus deinem config.h, siehe hw.cfg.\n// Die Rechnung nutzt wie das C-Original ganzzahlige Festkomma-Arithmetik mit 16 und 32 Bit.\n//\n// Nicht enthalten: der Simulink-FOC-Regler selbst (Strom-, Drehzahl- und Drehmomentmodus),\n// Feldschwächung, Batterie- und Temperaturschutz, Töne, Standstill Hold und Cruise Control.\n// Der Simulator behandelt die Ausgabe als Spannungsmodus (VLT_MODE).\n\nconst i16 = (v) => (v << 16) >> 16;                    // wie int16_t in C\nconst clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));\n\n// util.c: rateLimiter16 - begrenzt, wie schnell sich der Sollwert ändern darf\nfunction rateLimiter16(u, rate, y) {\n  let q0 = i16((u << 4) - y);\n  if (q0 > rate) q0 = rate;\n  else if (q0 < -rate) q0 = -rate;\n  return i16(q0 + y);\n}\n\n// util.c: filtLowPass32 - Tiefpassfilter\nfunction filtLowPass32(u, coef, y) {\n  let tmp = Math.floor(((u << 4) - (y >> 12)) * coef / 16);\n  tmp = clamp(tmp, -2147483648, 2147483647);\n  return (tmp + y) | 0;\n}\n\n// util.c: mixerFcn - mischt Gas und Lenkung zu links und rechts\nfunction mixerFcn(speed, steer, c) {\n  const prodSpeed = i16((speed * i16(c.SPEED_COEFFICIENT)) >> 14);\n  const prodSteer = i16((steer * i16(c.STEER_COEFFICIENT)) >> 14);\n  let tmp = clamp(prodSpeed - prodSteer, -32768, 32767);\n  const R = clamp(tmp >> 4, c.INPUT_MIN, c.INPUT_MAX);\n  tmp = clamp(prodSpeed + prodSteer, -32768, 32767);\n  const L = clamp(tmp >> 4, c.INPUT_MIN, c.INPUT_MAX);\n  return { L, R };\n}\n\n// Eingänge: input1 = Lenkung, input2 = Gas, jeweils -1000 bis 1000\nfunction readCommands(hw) {\n  const c = hw.cfg;\n  if (c.variant === 'HOVERBOARD') {\n    // Neigungsplatinen: Die Hauptplatine bekommt cmd1/cmd2 fertig von den Platinen (util.c: Sideboard.cmd1/cmd2).\n    // Wie die Platinen den Winkel in cmd1/cmd2 umrechnen, bestimmt deren eigene Firmware. Hier ein Beispiel.\n    const standing = hw.in.footL && hw.in.footR;\n    const lean = (hw.in.padL + hw.in.padR) / 2;\n    const twist = (hw.in.padL - hw.in.padR) / 20;\n    const dead = 3, full = 15;\n    let gas = 0;\n    if (Math.abs(lean) > dead) gas = clamp((lean - Math.sign(lean) * dead) / (full - dead), -1, 1);\n    return {\n      in1: standing ? Math.round(clamp(twist, -1, 1) * 1000) : 0,\n      in2: standing ? Math.round(gas * 1000) : 0,\n    };\n  }\n  // ADC (Potis oder Gashebel), nach der Kalibrierung: -1000 bis 1000\n  return {\n    in1: Math.round(hw.in.steer * 1000),\n    in2: Math.round(hw.in.throttle * 1000),\n  };\n}\n\nfunction setup(hw) {\n  hw.state = { enable: 0, steerRate: 0, speedRate: 0, steerFix: 0, speedFix: 0 };\n  hw.out.currentLimit = hw.cfg.I_MOT_MAX;\n  hw.out.enable = false;\n  hw.log('Variante ' + (hw.cfg.variant || 'keine') + ', RATE ' + hw.cfg.RATE + ', FILTER ' + hw.cfg.FILTER);\n}\n\n// main.c: Hauptschleife, läuft alle DELAY_IN_MAIN_LOOP Millisekunden (Standard 5)\nfunction loop(hw, dt) {\n  const c = hw.cfg, s = hw.state;\n  const { in1, in2 } = readCommands(hw);\n\n  // Motoren erst freigeben, wenn die Eingänge klein sind (Sicherheit)\n  if (hw.sens.fault) s.enable = 0;\n  if (s.enable === 0 && !hw.sens.fault && Math.abs(in1) < 50 && Math.abs(in2) < 50) {\n    s.steerFix = s.speedFix = 0;\n    s.enable = 1;\n  }\n\n  // Tiefpassfilter\n  s.steerRate = rateLimiter16(in1, c.RATE, s.steerRate);\n  s.speedRate = rateLimiter16(in2, c.RATE, s.speedRate);\n  s.steerFix = filtLowPass32(s.steerRate >> 4, c.FILTER, s.steerFix);\n  s.speedFix = filtLowPass32(s.speedRate >> 4, c.FILTER, s.speedFix);\n  const steer = s.steerFix >> 16;\n  const speed = s.speedFix >> 16;\n\n  // Mixer\n  let cmdL, cmdR;\n  if (c.TANK_STEERING) {\n    cmdL = steer;\n    cmdR = speed;\n  } else {\n    const m = mixerFcn(speed << 4, steer << 4, c);\n    cmdL = m.L;\n    cmdR = m.R;\n  }\n\n  // Ausgabe wie in main.c. Auf dem echten Board ist der rechte Motor gespiegelt verbaut.\n  const pwmr = c.INVERT_R_DIRECTION ? cmdR : -cmdR;\n  const pwml = c.INVERT_L_DIRECTION ? -cmdL : cmdL;\n  hw.out.motorL = pwml;\n  hw.out.motorR = -pwmr;          // Simulator: positiv heißt bei beiden Rädern vorwärts\n  hw.out.enable = s.enable === 1;\n  hw.out.led = s.enable === 1;\n}\n";
+var PH=0.001;            // Schrittweite der Physik in Sekunden
+var FWDT=0.005;          // Takt der Firmware in Sekunden (aus DELAY_IN_MAIN_LOOP)
+var CFGR=hlParseConfig('');
+
 /* ---------- Fahrzeugdaten (Hoverboard-Hubmotoren, 10S) ---------- */
 var P={r:0.083,track:0.52,Kt:0.45,ke:0.45,R:0.55,pp:15,rint:0.18,capAh:4.4,imax:32};
 var HALL=[1,3,2,6,4,5];
 
 /* ---------- Firmware-Vorlagen ---------- */
 var HEADER=
-'// Hoverlab-Firmware (JavaScript). setup() läuft einmal, loop() 100-mal pro Sekunde.\n'+
+'// Hoverlab-Firmware (JavaScript). setup() läuft einmal, loop(hw, dt) im Takt von DELAY_IN_MAIN_LOOP (Standard 5 ms).\n'+
 '// hw.in     Eingänge: throttle, steer (-1 links ... +1 rechts), padL, padR (Grad), footL, footR\n'+
 '// hw.sens   Sensoren: battV, battA, speedKmh, rpmL, rpmR, currL, currR, hallL, hallR, fault\n'+
 '// hw.out    Ausgänge: motorL, motorR (-1000..1000), currentLimit (A), led, buzzer, enable\n'+
-'// hw.state  Dein Speicher zwischen den Aufrufen.  hw.log(...) schreibt in die Konsole.\n\n';
+'// hw.state  Dein Speicher zwischen den Aufrufen.  hw.log(...) schreibt in die Konsole.\n'+
+'// hw.cfg    Werte aus deinem config.h (variant, RATE, FILTER, SPEED_COEFFICIENT, STEER_COEFFICIENT, ...)\n\n';
 
 var PRESETS={
 kart:{name:'Kart mit Gas und Lenkung',src:HEADER+
@@ -317,7 +429,9 @@ blank:{name:'Leere Vorlage',src:HEADER+
 '  // Hier eigene Logik schreiben. Beispiel: Motoren mit Gas ansteuern.\n'+
 '  hw.out.motorL = hw.in.throttle * 300;\n'+
 '  hw.out.motorR = hw.in.throttle * 300;\n'+
-'}\n'}
+'}\n'},
+real:{name:'Original-Befehlskette (Variante ADC)',src:PORT_SRC,cfg:'// Hier den Inhalt deiner Inc/config.h einfügen (komplett oder nur die geänderten Zeilen).\n#define VARIANT_ADC\n'},
+realhb:{name:'Original-Befehlskette (Neigungsplatinen)',src:PORT_SRC,cfg:'// Hier den Inhalt deiner Inc/config.h einfügen (komplett oder nur die geänderten Zeilen).\n#define VARIANT_HOVERBOARD\n'}
 };
 
 /* ---------- Zustand ---------- */
@@ -333,7 +447,7 @@ function resetVehicle(){
 function initHw(){
   hw={in:{throttle:0,steer:0,padL:0,padR:0,footL:true,footR:true},
       sens:{battV:40,battA:0,speedKmh:0,rpmL:0,rpmR:0,currL:0,currR:0,hallL:0,hallR:0,fault:false},
-      out:newOut(),state:{},t:0,
+      out:newOut(),state:{},t:0,cfg:CFGR.cfg,
       log:function(){
         var a=Array.prototype.slice.call(arguments).map(function(x){return typeof x==='number'?String(Math.round(x*1000)/1000):String(x)}).join(' ');
         if(logWindow>=40)return; logWindow++;
@@ -342,33 +456,53 @@ function initHw(){
 }
 
 /* ---------- Projekte ---------- */
-var PROJ={cur:'',items:{}};
+var PROJ={cur:'',items:{},seed:0};
+function mkProj(code,cfg){return {code:code,cfg:cfg||''}}
+function normItem(v){
+  if(typeof v==='string')return mkProj(v,'');
+  if(v&&typeof v==='object'&&typeof v.code==='string')return mkProj(v.code,typeof v.cfg==='string'?v.cfg:'');
+  return null;
+}
 function cleanName(n){return String(n||'').replace(/[^\wäöüÄÖÜß .+\-]/g,'').replace(/^[_\s]+/,'').trim().slice(0,40)}
 function uniqueName(base){var n=base,i=2;while(Object.prototype.hasOwnProperty.call(PROJ.items,n)){n=base+' '+i;i++}return n}
 function saveProjects(){try{localStorage.setItem('hoverlab-projects',JSON.stringify(PROJ))}catch(e){}}
 function loadProjects(){
   try{
     var j=JSON.parse(localStorage.getItem('hoverlab-projects')||'null');
-    if(j&&j.items&&typeof j.items==='object'&&Object.keys(j.items).length){
-      PROJ={cur:j.cur,items:{}};
-      Object.keys(j.items).forEach(function(k){if(typeof j.items[k]==='string')PROJ.items[k]=j.items[k]});
-      if(!Object.prototype.hasOwnProperty.call(PROJ.items,PROJ.cur))PROJ.cur=Object.keys(PROJ.items)[0];
-      if(PROJ.cur)return;
+    if(j&&j.items&&typeof j.items==='object'){
+      PROJ={cur:j.cur,items:{},seed:j.seed||0};
+      Object.keys(j.items).forEach(function(k){var it=normItem(j.items[k]);if(it)PROJ.items[k]=it});
     }
   }catch(e){}
-  var old=null;try{old=localStorage.getItem('hoverlab-src')}catch(e){}
-  PROJ={cur:'Kart 1',items:{}};PROJ.items['Kart 1']=old||PRESETS.kart.src;
+  if(!Object.keys(PROJ.items).length){
+    var old=null;try{old=localStorage.getItem('hoverlab-src')}catch(e){}
+    PROJ={cur:'Kart 1',items:{},seed:0};PROJ.items['Kart 1']=mkProj(old||PRESETS.kart.src,'');
+  }
+  if(PROJ.seed<3){
+    var n1=uniqueName('Original ADC');PROJ.items[n1]=mkProj(PRESETS.real.src,PRESETS.real.cfg);
+    var n2=uniqueName('Original Neigungsplatinen');PROJ.items[n2]=mkProj(PRESETS.realhb.src,PRESETS.realhb.cfg);
+    PROJ.seed=3;PROJ.cur=n1;
+  }
+  if(!Object.prototype.hasOwnProperty.call(PROJ.items,PROJ.cur))PROJ.cur=Object.keys(PROJ.items)[0];
 }
 function fillProjSelect(){
   var s=$('#proj');s.innerHTML='';
   Object.keys(PROJ.items).forEach(function(n){var o=document.createElement('option');o.value=n;o.textContent=n;s.appendChild(o)});
   s.value=PROJ.cur;
 }
-function stashCode(){PROJ.items[PROJ.cur]=$('#code').value;saveProjects()}
+function stashCode(){PROJ.items[PROJ.cur]=mkProj($('#code').value,$('#cfg').value);saveProjects()}
+function showProject(){var it=PROJ.items[PROJ.cur];$('#code').value=it.code;$('#cfg').value=it.cfg}
 function projMsg(t){$('#projHint').textContent=t}
 function openProject(name){
-  stashCode();PROJ.cur=name;$('#code').value=PROJ.items[name];
+  stashCode();PROJ.cur=name;showProject();
   fillProjSelect();saveProjects();applyFirmware();
+}
+function showCfg(){
+  var c=CFGR.cfg,e=$('#cfgStatus');
+  e.textContent='Variante '+(c.variant||'keine')+' · RATE '+c.RATE+' · FILTER '+c.FILTER+' · Gas '+c.SPEED_COEFFICIENT+' · Lenkung '+c.STEER_COEFFICIENT+' · '+c.CTRL_MOD_REQ+' · Takt '+c.DELAY_IN_MAIN_LOOP+' ms'+
+    (c.TANK_STEERING?' · Tank':'')+(c.INVERT_L_DIRECTION?' · L invertiert':'')+(c.INVERT_R_DIRECTION?' · R invertiert':'')+
+    (CFGR.notes.length?'\nHinweis: '+CFGR.notes.join(' '):'');
+  e.className='status ok';
 }
 
 /* ---------- Firmware laden ---------- */
@@ -388,6 +522,7 @@ function compile(src){
 }
 function applyFirmware(){
   stashCode();
+  CFGR=hlParseConfig($('#cfg').value);FWDT=CFGR.cfg.DELAY_IN_MAIN_LOOP/1000;showCfg();
   var r=compile($('#code').value);
   if(r.error||!r.fw){
     fw.ok=false;fw.halted=true;
@@ -468,11 +603,11 @@ var fwAcc=0,sampAcc=0,trailAcc=0;
 function runFw(){
   if(!fw.ok||fw.halted)return;
   readInputs();readSensors();hw.t=S.t;
-  try{fw.loop(hw,0.01)}catch(e){haltFw(e)}
+  try{fw.loop(hw,FWDT)}catch(e){haltFw(e)}
 }
 function stepAll(dt){
   S.t+=dt;fwAcc+=dt;
-  if(fwAcc>=0.01){fwAcc-=0.01;runFw()}
+  if(fwAcc>=FWDT){fwAcc-=FWDT;runFw()}
   physStep(dt);
   sampAcc+=dt;
   if(sampAcc>=0.02){
@@ -752,12 +887,13 @@ function updateStats(){
 }
 
 /* ---------- Hauptschleife ---------- */
-var last=performance.now(),slow=0;
+var last=performance.now(),slow=0,simAcc=0;
 function frame(now){
   var real=Math.min(0.05,(now-last)/1000);last=now;
   if(!ui.paused){
-    var n=0,steps=Math.round(real*ui.speed/0.0025);
-    while(n<steps&&n<200){stepAll(0.0025);n++}
+    var n=0;simAcc+=real*ui.speed;
+    while(simAcc>=PH&&n<400){stepAll(PH);simAcc-=PH;n++}
+    if(n>=400)simAcc=0;
   }
   slow+=real;
   var col={grid:css('--grid'),muted:css('--muted'),fg:css('--fg'),left:css('--left'),right:css('--right'),third:css('--third'),good:css('--good'),warn:css('--warn'),bad:css('--bad'),bodyFill:css('--body-fill'),canvas:css('--canvas'),accent:css('--accent'),mono:"'JetBrains Mono',monospace"};
@@ -804,18 +940,20 @@ var sel=$('#preset');
 Object.keys(PRESETS).forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=PRESETS[k].name;sel.appendChild(o)});
 
 $('#btnApply').addEventListener('click',function(){applyFirmware()});
+$('#btnCfg').addEventListener('click',function(){applyFirmware()});
+$('#btnOpenFw').addEventListener('click',function(){$('#t-fw').click();$('#code').focus()});
 $('#proj').addEventListener('change',function(){openProject(this.value)});
 $('#btnNew').addEventListener('click',function(){
   stashCode();
-  var name=uniqueName(cleanName($('#projName').value)||PRESETS[sel.value].name);
-  PROJ.items[name]=PRESETS[sel.value].src;PROJ.cur=name;
-  $('#code').value=PROJ.items[name];$('#projName').value='';
-  fillProjSelect();saveProjects();applyFirmware();projMsg('Neues Projekt "'+name+'" angelegt.');
+  var p=PRESETS[sel.value];
+  var name=uniqueName(cleanName($('#projName').value)||p.name);
+  PROJ.items[name]=mkProj(p.src,p.cfg||'');PROJ.cur=name;$('#projName').value='';
+  showProject();fillProjSelect();saveProjects();applyFirmware();projMsg('Neues Projekt "'+name+'" angelegt.');
 });
 $('#btnCopy').addEventListener('click',function(){
   stashCode();
   var name=uniqueName(cleanName($('#projName').value)||(PROJ.cur+' Kopie'));
-  PROJ.items[name]=$('#code').value;PROJ.cur=name;$('#projName').value='';
+  PROJ.items[name]=mkProj($('#code').value,$('#cfg').value);PROJ.cur=name;$('#projName').value='';
   fillProjSelect();saveProjects();projMsg('Kopie als "'+name+'" gespeichert.');
 });
 var delArmed=null;
@@ -829,39 +967,42 @@ $('#btnDel').addEventListener('click',function(){
   clearTimeout(delArmed);delArmed=null;b.textContent='Projekt löschen';
   var gone=PROJ.cur;delete PROJ.items[gone];
   var left=Object.keys(PROJ.items);
-  if(!left.length){PROJ.items['Kart 1']=PRESETS.kart.src;left=['Kart 1']}
-  PROJ.cur=left[0];$('#code').value=PROJ.items[PROJ.cur];
+  if(!left.length){PROJ.items['Kart 1']=mkProj(PRESETS.kart.src,'');left=['Kart 1']}
+  PROJ.cur=left[0];showProject();
   fillProjSelect();saveProjects();applyFirmware();projMsg('Projekt "'+gone+'" gelöscht.');
 });
 $('#btnExp').addEventListener('click',function(){
   stashCode();
-  try{
-    var blob=new Blob([JSON.stringify({hoverlab:1,items:PROJ.items},null,2)],{type:'application/json'});
-    var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='hoverlab-projekte.json';
-    document.body.appendChild(a);a.click();a.remove();
-    projMsg('Export gestartet: hoverlab-projekte.json. In manchen Umgebungen ist der Download gesperrt.');
-  }catch(e){projMsg('Export hat nicht geklappt.')}
+  var txt=JSON.stringify({hoverlab:2,items:PROJ.items},null,2),x=$('#xfer');
+  x.hidden=false;x.value=txt;x.focus();x.select();
+  var fallback='Export steht im Textfeld. Den Text kopieren und in eine Datei speichern.';
+  try{navigator.clipboard.writeText(txt).then(function(){projMsg('Export ist kopiert und im Textfeld markiert. In eine Textdatei einfügen und speichern.')},function(){projMsg(fallback)})}catch(e){projMsg(fallback)}
 });
+function importText(raw){
+  try{
+    var j=JSON.parse(raw),cnt=0;
+    if(!j||typeof j.items!=='object')throw new Error('Format');
+    stashCode();
+    Object.keys(j.items).forEach(function(k){
+      var it=normItem(j.items[k]);if(!it)return;
+      PROJ.items[uniqueName(cleanName(k)||'Import')]=it;cnt++;
+    });
+    fillProjSelect();saveProjects();projMsg(cnt+' Projekt(e) importiert.');
+  }catch(e){projMsg('Das ist kein Hoverlab-Export.')}
+}
 $('#btnImp').addEventListener('click',function(){$('#fileImp').click()});
+$('#btnImpTxt').addEventListener('click',function(){
+  var x=$('#xfer');
+  if(x.hidden||!x.value.trim()){x.hidden=false;x.value='';x.focus();projMsg('Exportierten Text ins Feld einfügen und noch einmal auf Aus Textfeld importieren drücken.');return}
+  importText(x.value);
+});
 $('#fileImp').addEventListener('change',function(){
   var f=this.files&&this.files[0];if(!f)return;
-  var rd=new FileReader();
-  rd.onload=function(){
-    try{
-      var j=JSON.parse(rd.result),cnt=0;
-      if(!j||typeof j.items!=='object')throw new Error('Format');
-      stashCode();
-      Object.keys(j.items).forEach(function(k){
-        if(typeof j.items[k]!=='string')return;
-        var nm=uniqueName(cleanName(k)||'Import');PROJ.items[nm]=j.items[k];cnt++;
-      });
-      fillProjSelect();saveProjects();projMsg(cnt+' Projekt(e) importiert.');
-    }catch(e){projMsg('Die Datei ist kein Hoverlab-Export.')}
-  };
-  rd.readAsText(f);this.value='';
+  var rd=new FileReader();rd.onload=function(){importText(rd.result)};rd.readAsText(f);this.value='';
 });
 var saveT=null;
 $('#code').addEventListener('input',function(){clearTimeout(saveT);saveT=setTimeout(stashCode,600)});
+$('#cfg').addEventListener('input',function(){clearTimeout(saveT);saveT=setTimeout(stashCode,600)});
 $('#code').addEventListener('keydown',function(e){
   if(e.key==='Tab'){
     e.preventDefault();var t=e.target,s=t.selectionStart;
@@ -882,8 +1023,7 @@ window.addEventListener('blur',function(){keys={}});
 /* ---------- Start ---------- */
 buildConns();
 initHw();resetVehicle();
-loadProjects();fillProjSelect();
-$('#code').value=PROJ.items[PROJ.cur];
+loadProjects();fillProjSelect();showProject();
 applyFirmware();
 requestAnimationFrame(frame);
 })();
