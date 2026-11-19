@@ -137,7 +137,7 @@ pre#console{margin:0;background:var(--code-bg);color:var(--code-fg);border-radiu
       <label for="proj">Projekt</label>
       <select id="proj"></select>
       <button id="btnOpenFw" type="button">Code bearbeiten</button>
-      <span class="ver">Version 3</span>
+      <span class="ver">Version 4</span>
     </div>
   </header>
 
@@ -147,6 +147,7 @@ pre#console{margin:0;background:var(--code-bg);color:var(--code-fg);border-radiu
       <div class="stat"><span>Akku</span><b id="sBatt">0,0 V</b></div>
       <div class="stat"><span>Strom</span><b id="sAmp">0,0 A</b></div>
       <div class="stat"><span>Platine</span><b id="sState">läuft</b></div>
+      <div class="stat" id="stSteer" hidden><span>Lenker</span><b id="sSteer">0°</b></div>
     </div>
     <div class="viewbar">
       <div class="seg" role="group" aria-label="Ansicht">
@@ -181,7 +182,8 @@ pre#console{margin:0;background:var(--code-bg);color:var(--code-fg);border-radiu
 
     <div class="pane" id="p-in" role="tabpanel" aria-labelledby="t-in">
       <div class="ctl"><label for="rThr">Gas</label><input id="rThr" type="range" min="-100" max="100" value="0"><output id="oThr">0</output></div>
-      <div class="ctl"><label for="rStr">Lenkung</label><input id="rStr" type="range" min="-100" max="100" value="0"><output id="oStr">0</output></div>
+      <div class="ctl" id="rowStr"><label for="rStr">Lenkung</label><input id="rStr" type="range" min="-100" max="100" value="0"><output id="oStr">0</output></div>
+      <div class="ctl" id="rowHb" hidden><label for="rHb">Lenker</label><input id="rHb" type="range" min="-35" max="35" step="1" value="0"><output id="oHb">0°</output></div>
       <div class="ctl"><label for="rPadL">Pad links</label><input id="rPadL" type="range" min="-20" max="20" step="0.5" value="0"><output id="oPadL">0°</output></div>
       <div class="ctl"><label for="rPadR">Pad rechts</label><input id="rPadR" type="range" min="-20" max="20" step="0.5" value="0"><output id="oPadR">0°</output></div>
       <div class="checks">
@@ -191,12 +193,16 @@ pre#console{margin:0;background:var(--code-bg);color:var(--code-fg);border-radiu
       </div>
       <div class="ctl"><label for="rLoad">Zuladung</label><input id="rLoad" type="range" min="0" max="110" value="60"><output id="oLoad">60 kg</output></div>
       <div class="ctl"><label for="rSoc">Akkustand</label><input id="rSoc" type="range" min="0" max="100" value="85"><output id="oSoc">85 %</output></div>
-      <p class="hint">Gas und Lenkung gehören zur Kart-Firmware und zur Variante ADC. Die Pads brauchst du für die Neigungs-Firmware und die Variante HOVERBOARD. Lenkung: Plus ist rechts.</p>
+      <p class="hint">Beim Fahrzeug "Box mit Lenker" ist die Lenkung mechanisch: Der Regler Lenker dreht die Vorderräder, die Firmware bekommt nur das Gas. Gas und Lenkung gehören zur Kart-Firmware und zur Variante ADC. Die Pads brauchst du für die Neigungs-Firmware und die Variante HOVERBOARD. Lenkung: Plus ist rechts.</p>
     </div>
 
     <div class="edit" id="p-fw" role="tabpanel" aria-labelledby="t-fw" hidden>
       <div class="bar">
         <button id="btnApply" class="primary">Übernehmen und starten</button>
+      </div>
+      <div class="bar">
+        <label for="veh">Fahrzeug</label>
+        <select id="veh"><option value="diff">Zwei Motoren, Differenzial (Hoverboard-Stil)</option><option value="rear">Box mit Lenker: Hinterachse angetrieben</option></select>
       </div>
       <div class="bar">
         <input id="projName" type="text" maxlength="40" placeholder="Name für ein neues Projekt" aria-label="Projektname">
@@ -341,13 +347,13 @@ var FWDT=0.005;          // Takt der Firmware in Sekunden (aus DELAY_IN_MAIN_LOO
 var CFGR=hlParseConfig('');
 
 /* ---------- Fahrzeugdaten (Hoverboard-Hubmotoren, 10S) ---------- */
-var P={r:0.083,track:0.52,Kt:0.45,ke:0.45,R:0.55,pp:15,rint:0.18,capAh:4.4,imax:32};
+var P={r:0.083,track:0.52,WB:0.9,Kt:0.45,ke:0.45,R:0.55,pp:15,rint:0.18,capAh:4.4,imax:32};
 var HALL=[1,3,2,6,4,5];
 
 /* ---------- Firmware-Vorlagen ---------- */
 var HEADER=
 '// Hoverlab-Firmware (JavaScript). setup() läuft einmal, loop(hw, dt) im Takt von DELAY_IN_MAIN_LOOP (Standard 5 ms).\n'+
-'// hw.in     Eingänge: throttle, steer (-1 links ... +1 rechts), padL, padR (Grad), footL, footR\n'+
+'// hw.in     Eingänge: throttle, steer (-1 links ... +1 rechts), padL, padR (Grad), footL, footR, handlebar (Lenkwinkel in Grad)\n'+
 '// hw.sens   Sensoren: battV, battA, speedKmh, rpmL, rpmR, currL, currR, hallL, hallR, fault\n'+
 '// hw.out    Ausgänge: motorL, motorR (-1000..1000), currentLimit (A), led, buzzer, enable\n'+
 '// hw.state  Dein Speicher zwischen den Aufrufen.  hw.log(...) schreibt in die Konsole.\n'+
@@ -431,21 +437,23 @@ blank:{name:'Leere Vorlage',src:HEADER+
 '  hw.out.motorR = hw.in.throttle * 300;\n'+
 '}\n'},
 real:{name:'Original-Befehlskette (Variante ADC)',src:PORT_SRC,cfg:'// Hier den Inhalt deiner Inc/config.h einfügen (komplett oder nur die geänderten Zeilen).\n#define VARIANT_ADC\n'},
-realhb:{name:'Original-Befehlskette (Neigungsplatinen)',src:PORT_SRC,cfg:'// Hier den Inhalt deiner Inc/config.h einfügen (komplett oder nur die geänderten Zeilen).\n#define VARIANT_HOVERBOARD\n'}
+realhb:{name:'Original-Befehlskette (Neigungsplatinen)',src:PORT_SRC,cfg:'// Hier den Inhalt deiner Inc/config.h einfügen (komplett oder nur die geänderten Zeilen).\n#define VARIANT_HOVERBOARD\n'},
+rearadc:{name:'Box mit Lenker: Original-Befehlskette (ADC)',veh:'rear',src:PORT_SRC,cfg:'// Hier den Inhalt deiner Inc/config.h einfügen (komplett oder nur die geänderten Zeilen).\n// Box mit Lenker: nur das Gas ist elektrisch, die Lenkung ist mechanisch.\n#define VARIANT_ADC\n'}
 };
 
 /* ---------- Zustand ---------- */
 var S,hw,fw={loop:null,setup:null,ok:false,halted:false},ui={paused:false,speed:1};
 var buf=[],trail=[],logLines=[],logDirty=false,logWindow=0;
 var keys={};
+var VEH='diff',steerDeg=0;
 
 function newOut(){return {motorL:0,motorR:0,currentLimit:15,led:false,buzzer:false,enable:true}}
 function resetVehicle(){
-  S={t:0,x:0,y:0,h:0,v:0,w:0,angL:0,angR:0,soc:Number($('#rSoc').value)/100,vbat:40,ibatt:0,iL:0,iR:0,vL:0,vR:0,faultT:0,tripT:0};
+  S={t:0,x:0,y:0,h:0,v:0,w:0,angL:0,angR:0,soc:Number($('#rSoc').value)/100,vbat:40,ibatt:0,iL:0,iR:0,vL:0,vR:0,faultT:0,tripT:0,tip:false,angF:0};
   buf=[];trail=[];
 }
 function initHw(){
-  hw={in:{throttle:0,steer:0,padL:0,padR:0,footL:true,footR:true},
+  hw={in:{throttle:0,steer:0,padL:0,padR:0,footL:true,footR:true,handlebar:0},
       sens:{battV:40,battA:0,speedKmh:0,rpmL:0,rpmR:0,currL:0,currR:0,hallL:0,hallR:0,fault:false},
       out:newOut(),state:{},t:0,cfg:CFGR.cfg,
       log:function(){
@@ -457,10 +465,10 @@ function initHw(){
 
 /* ---------- Projekte ---------- */
 var PROJ={cur:'',items:{},seed:0};
-function mkProj(code,cfg){return {code:code,cfg:cfg||''}}
+function mkProj(code,cfg,veh){return {code:code,cfg:cfg||'',veh:veh==='rear'?'rear':'diff'}}
 function normItem(v){
   if(typeof v==='string')return mkProj(v,'');
-  if(v&&typeof v==='object'&&typeof v.code==='string')return mkProj(v.code,typeof v.cfg==='string'?v.cfg:'');
+  if(v&&typeof v==='object'&&typeof v.code==='string')return mkProj(v.code,typeof v.cfg==='string'?v.cfg:'',v.veh);
   return null;
 }
 function cleanName(n){return String(n||'').replace(/[^\wäöüÄÖÜß .+\-]/g,'').replace(/^[_\s]+/,'').trim().slice(0,40)}
@@ -483,6 +491,10 @@ function loadProjects(){
     var n2=uniqueName('Original Neigungsplatinen');PROJ.items[n2]=mkProj(PRESETS.realhb.src,PRESETS.realhb.cfg);
     PROJ.seed=3;PROJ.cur=n1;
   }
+  if(PROJ.seed<4){
+    var n3=uniqueName('Box mit Lenker (Original ADC)');PROJ.items[n3]=mkProj(PRESETS.rearadc.src,PRESETS.rearadc.cfg,'rear');
+    PROJ.seed=4;PROJ.cur=n3;
+  }
   if(!Object.prototype.hasOwnProperty.call(PROJ.items,PROJ.cur))PROJ.cur=Object.keys(PROJ.items)[0];
 }
 function fillProjSelect(){
@@ -490,8 +502,13 @@ function fillProjSelect(){
   Object.keys(PROJ.items).forEach(function(n){var o=document.createElement('option');o.value=n;o.textContent=n;s.appendChild(o)});
   s.value=PROJ.cur;
 }
-function stashCode(){PROJ.items[PROJ.cur]=mkProj($('#code').value,$('#cfg').value);saveProjects()}
-function showProject(){var it=PROJ.items[PROJ.cur];$('#code').value=it.code;$('#cfg').value=it.cfg}
+function stashCode(){PROJ.items[PROJ.cur]=mkProj($('#code').value,$('#cfg').value,$('#veh').value);saveProjects()}
+function applyVeh(){
+  VEH=$('#veh').value==='rear'?'rear':'diff';
+  var r=VEH==='rear';
+  $('#rowStr').hidden=r;$('#rowHb').hidden=!r;$('#stSteer').hidden=!r;
+}
+function showProject(){var it=PROJ.items[PROJ.cur];$('#code').value=it.code;$('#cfg').value=it.cfg;$('#veh').value=it.veh;applyVeh()}
 function projMsg(t){$('#projHint').textContent=t}
 function openProject(name){
   stashCode();PROJ.cur=name;showProject();
@@ -546,7 +563,7 @@ function readInputs(){
   var thr=Number($('#rThr').value)/100,str=Number($('#rStr').value)/100;
   if(keys.w||keys.arrowup)thr=1; else if(keys.s||keys.arrowdown)thr=-1;
   if(keys.d||keys.arrowright)str=1; else if(keys.a||keys.arrowleft)str=-1;
-  hw.in.throttle=thr;hw.in.steer=str;
+  hw.in.throttle=thr;hw.in.steer=VEH==='rear'?0:str;hw.in.handlebar=steerDeg;
   hw.in.padL=Number($('#rPadL').value);hw.in.padR=Number($('#rPadR').value);
   hw.in.footL=$('#cFootL').checked;hw.in.footR=$('#cFootR').checked;
 }
@@ -566,7 +583,7 @@ function readSensors(){
 
 /* ---------- Physik ---------- */
 function physStep(dt){
-  var m=12+Number($('#rLoad').value);
+  var m=(VEH==='rear'?28:12)+Number($('#rLoad').value);
   var voc=31+11*S.soc;
   var Vb=Math.max(5,voc-P.rint*S.ibatt);
   S.vbat=Vb;
@@ -589,10 +606,16 @@ function physStep(dt){
   var FL=P.Kt*iL/P.r,FR=P.Kt*iR/P.r;
   var drag=0.015*m*9.81*Math.tanh(S.v/0.05)+0.25*S.v*Math.abs(S.v);
   var a=(FL+FR-drag)/m;
-  var Iz=m*0.22;
-  var torque=(FR-FL)*P.track/2-6*S.w-3*Math.tanh(S.w/0.2);
-  S.v+=a*dt;S.w+=torque/Iz*dt;
-  S.angL+=S.vL/P.r*dt;S.angR+=S.vR/P.r*dt;
+  S.v+=a*dt;
+  if(VEH==='rear'){
+    S.w=-S.v*Math.tan(steerDeg*Math.PI/180)/P.WB;
+    S.tip=Math.abs(S.v*S.w)>6;
+  }else{
+    var Iz=m*0.22;
+    var torque=(FR-FL)*P.track/2-6*S.w-3*Math.tanh(S.w/0.2);
+    S.w+=torque/Iz*dt;S.tip=false;
+  }
+  S.angL+=S.vL/P.r*dt;S.angR+=S.vR/P.r*dt;S.angF+=S.v/P.r*dt;
   S.h+=S.w*dt;
   S.x+=S.v*Math.cos(S.h)*dt;S.y+=S.v*Math.sin(S.h)*dt;
   S.ibatt=uL*iL+uR*iR+0.4;
@@ -600,6 +623,11 @@ function physStep(dt){
 }
 
 var fwAcc=0,sampAcc=0,trailAcc=0;
+function updateSteer(dt){
+  var tgt=Number($('#rHb').value);
+  if(keys.d||keys.arrowright)tgt=35;else if(keys.a||keys.arrowleft)tgt=-35;
+  steerDeg+=clamp(tgt-steerDeg,-150*dt,150*dt);
+}
 function runFw(){
   if(!fw.ok||fw.halted)return;
   readInputs();readSensors();hw.t=S.t;
@@ -607,7 +635,7 @@ function runFw(){
 }
 function stepAll(dt){
   S.t+=dt;fwAcc+=dt;
-  if(fwAcc>=FWDT){fwAcc-=FWDT;runFw()}
+  if(fwAcc>=FWDT){fwAcc-=FWDT;updateSteer(FWDT);runFw()}
   physStep(dt);
   sampAcc+=dt;
   if(sampAcc>=0.02){
@@ -630,7 +658,8 @@ function drawView(col){
   var cv=$('#view'),z=sizeCanvas(cv),c=z.c,w=z.w,h=z.h,sc=70;
   c.clearRect(0,0,w,h);
   c.strokeStyle=col.grid;c.lineWidth=1;c.beginPath();
-  var ox=(w/2)-S.x*sc,oy=(h/2)+S.y*sc;
+  var off=VEH==='rear'?P.WB/2:0,cx=S.x+off*Math.cos(S.h),cy=S.y+off*Math.sin(S.h);
+  var ox=(w/2)-cx*sc,oy=(h/2)+cy*sc;
   var x0=((ox%sc)+sc)%sc,y0=((oy%sc)+sc)%sc,i;
   for(i=x0;i<w;i+=sc){c.moveTo(i+.5,0);c.lineTo(i+.5,h)}
   for(i=y0;i<h;i+=sc){c.moveTo(0,i+.5);c.lineTo(w,i+.5)}
@@ -642,7 +671,7 @@ function drawView(col){
     if(i===0)c.moveTo(tx,ty);else c.lineTo(tx,ty);
   }
   c.stroke();c.globalAlpha=1;
-  c.save();c.translate(w/2,h/2);c.rotate(-S.h);
+  c.save();c.translate(w/2,h/2);c.rotate(-S.h);c.translate(-off*sc,0);
   function R(lx,ly,lw,lh,fill,rad){
     c.fillStyle=fill;c.beginPath();
     var px=(lx-lw/2)*sc,py=-(ly+lh/2)*sc;
@@ -650,15 +679,25 @@ function drawView(col){
     c.fill();
   }
   var ww=0.07;
-  R(0,0,0.3,P.track+0.04,col.bodyFill,4);
+  if(VEH==='rear')R(P.WB/2,0,P.WB,P.track+0.04,col.bodyFill,4);else R(0,0,0.3,P.track+0.04,col.bodyFill,4);
   var aL=clamp(Math.abs(S.iL)/15,0,1),aR=clamp(Math.abs(S.iR)/15,0,1);
   c.globalAlpha=.35+.65*aL;R(0,P.track/2+0.04,0.17,ww+0.03,col.left,2);
   c.globalAlpha=.35+.65*aR;R(0,-P.track/2-0.04,0.17,ww+0.03,col.right,2);
   c.globalAlpha=1;
-  c.fillStyle=col.fg;c.beginPath();c.moveTo(0.34*sc,0);c.lineTo(0.2*sc,-0.07*sc);c.lineTo(0.2*sc,0.07*sc);c.closePath();c.fill();
+  var ax=0;
+  if(VEH==='rear'){
+    ax=P.WB;
+    var dl=steerDeg*Math.PI/180;
+    [P.track/2+0.04,-P.track/2-0.04].forEach(function(yy){
+      c.save();c.translate(P.WB*sc,-yy*sc);c.rotate(dl);c.fillStyle=col.fg;c.fillRect(-0.085*sc,-0.04*sc,0.17*sc,0.08*sc);c.restore();
+    });
+    c.save();c.translate((P.WB-0.15)*sc,0);c.rotate(dl);c.strokeStyle=col.fg;c.lineWidth=3;c.beginPath();c.moveTo(0,-0.2*sc);c.lineTo(0,0.2*sc);c.stroke();c.restore();
+  }
+  c.fillStyle=col.fg;c.beginPath();c.moveTo((ax+0.34)*sc,0);c.lineTo((ax+0.2)*sc,-0.07*sc);c.lineTo((ax+0.2)*sc,0.07*sc);c.closePath();c.fill();
   c.restore();
   c.fillStyle=hw.out.led?col.good:col.muted;c.beginPath();c.arc(w-18,18,6,0,TAU);c.fill();
   if(S.faultT>0){c.fillStyle=col.bad;c.font='500 13px '+col.mono;c.textAlign='right';c.fillText('Überstromschutz aktiv',w-32,22)}
+  else if(S.tip){c.fillStyle=col.warn;c.font='500 13px '+col.mono;c.textAlign='right';c.fillText('Kippgefahr: Kurve zu schnell',w-32,22)}
   else if(hw.out.buzzer){c.fillStyle=col.warn;c.font='500 13px '+col.mono;c.textAlign='right';c.fillText('Summer an',w-32,22)}
   c.textAlign='left';
 }
@@ -722,6 +761,30 @@ function init3d(){
     T3.rider=new THREE.Mesh(new THREE.CylinderGeometry(0.13,0.13,1,16),new THREE.MeshLambertMaterial({color:0x8a97a3,transparent:true,opacity:0.55}));
     car.add(T3.rider);
     T3.scene.add(car);
+    var rc=new THREE.Group();T3.carR=rc;rc.visible=false;
+    var fr=new THREE.Mesh(new THREE.BoxGeometry(P.WB,0.07,P.track+0.04),M(0x2d3935));fr.position.set(P.WB/2,0.2,0);rc.add(fr);
+    var plate=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.02,0.2),M(0x1f7a4d));plate.position.set(0.3,0.245,0);rc.add(plate);
+    var led2=new THREE.Mesh(new THREE.SphereGeometry(0.014,12,8),T3.ledMat);led2.position.set(0.42,0.27,0);rc.add(led2);
+    function rwheel(x,z,hubMat,parent){
+      var g=new THREE.Group();g.position.set(x,0.083,z);
+      var tg=new THREE.CylinderGeometry(0.083,0.083,0.06,28);tg.rotateX(Math.PI/2);
+      g.add(new THREE.Mesh(tg,M(0x1a1e1d)));
+      var hg=new THREE.CylinderGeometry(0.05,0.05,0.066,20);hg.rotateX(Math.PI/2);
+      g.add(new THREE.Mesh(hg,hubMat));
+      var st=new THREE.Mesh(new THREE.BoxGeometry(0.03,0.014,0.07),M(0xf2f2f2));st.position.set(0.07,0,0);g.add(st);
+      parent.add(g);return g;
+    }
+    T3.rwL=rwheel(0,-0.28,T3.matHubL,rc);T3.rwR=rwheel(0,0.28,T3.matHubR,rc);
+    T3.fPivL=new THREE.Group();T3.fPivL.position.set(P.WB,0,-0.28);rc.add(T3.fPivL);
+    T3.fPivR=new THREE.Group();T3.fPivR.position.set(P.WB,0,0.28);rc.add(T3.fPivR);
+    var grey=M(0x888888);
+    T3.fwL=rwheel(0,0,grey,T3.fPivL);T3.fwR=rwheel(0,0,grey,T3.fPivR);
+    var post=new THREE.Mesh(new THREE.CylinderGeometry(0.015,0.015,0.5,10),M(0xdddddd));post.position.set(P.WB-0.1,0.45,0);rc.add(post);
+    T3.bar=new THREE.Group();T3.bar.position.set(P.WB-0.1,0.7,0);
+    T3.bar.add(new THREE.Mesh(new THREE.BoxGeometry(0.03,0.03,0.46),M(0xdddddd)));rc.add(T3.bar);
+    T3.riderR=new THREE.Mesh(new THREE.CylinderGeometry(0.13,0.13,1,16),new THREE.MeshLambertMaterial({color:0x8a97a3,transparent:true,opacity:0.55}));
+    T3.riderR.position.x=0.3;rc.add(T3.riderR);
+    T3.scene.add(rc);
 
     var N=400;T3.trailPos=new Float32Array(N*3);
     var tgeo=new THREE.BufferGeometry();
@@ -776,8 +839,15 @@ function update3d(col){
   var cv=$('#view3d'),w=cv.clientWidth,h=cv.clientHeight;
   if(w<2||h<2)return;
   if(T3.w!==w||T3.h!==h){T3.w=w;T3.h=h;T3.r.setSize(w,h,false);T3.camera.aspect=w/h;T3.camera.updateProjectionMatrix()}
-  var car=T3.car;
+  var rear=VEH==='rear',car=rear?T3.carR:T3.car;
+  T3.car.visible=!rear;T3.carR.visible=rear;
   car.position.set(S.x,0,-S.y);car.rotation.y=S.h;
+  if(rear){
+    var dl=steerDeg*Math.PI/180;
+    T3.rwL.rotation.z=-S.angL;T3.rwR.rotation.z=-S.angR;
+    T3.fwL.rotation.z=-S.angF;T3.fwR.rotation.z=-S.angF;
+    T3.fPivL.rotation.y=-dl;T3.fPivR.rotation.y=-dl;T3.bar.rotation.y=-dl;
+  }
   T3.wL.rotation.z=-S.angL;T3.wR.rotation.z=-S.angR;
   T3.padL.rotation.z=-hw.in.padL*Math.PI/180;T3.padR.rotation.z=-hw.in.padR*Math.PI/180;
   T3.padL.userData.mesh.material=hw.in.footL?T3.matPadOn:T3.matPadOff;
@@ -785,13 +855,15 @@ function update3d(col){
   T3.ledMat.color.set(hw.out.led?0x46ff8a:(S.faultT>0?0xff3b3b:0x777777));
   var load=Number($('#rLoad').value),sc=Math.max(0.01,load/70);
   T3.rider.visible=load>2;T3.rider.scale.y=sc;T3.rider.position.y=0.17+0.5*sc;
+  T3.riderR.visible=load>2;T3.riderR.scale.y=sc;T3.riderR.position.y=0.24+0.5*sc;
   T3.ground.position.set(Math.round(S.x/2)*2,0,Math.round(-S.y/2)*2);
   var n=trail.length,p=T3.trailPos;
   for(var i=0;i<n;i++){p[i*3]=trail[i][0];p[i*3+1]=0.012;p[i*3+2]=-trail[i][1]}
   T3.trailGeo.setDrawRange(0,n);T3.trailGeo.attributes.position.needsUpdate=true;
   var th=T3.yaw+($('#cFollow').checked?S.h:0),cp=Math.cos(T3.pitch),sp=Math.sin(T3.pitch);
-  T3.camera.position.set(S.x-T3.dist*cp*Math.cos(th),0.15+T3.dist*sp,-S.y+T3.dist*cp*Math.sin(th));
-  T3.camera.lookAt(S.x,0.15,-S.y);
+  var foff=rear?P.WB/2:0,fx=S.x+foff*Math.cos(S.h),fz=-(S.y+foff*Math.sin(S.h));
+  T3.camera.position.set(fx-T3.dist*cp*Math.cos(th),0.15+T3.dist*sp,fz+T3.dist*cp*Math.sin(th));
+  T3.camera.lookAt(fx,0.15,fz);
   T3.r.render(T3.scene,T3.camera);
 }
 function setView(v){
@@ -845,6 +917,7 @@ var CONNS=[
  {t:'Motor rechts',s:'Phasen A/B/C (gelb, blau, grün), Hall und 5 V',r:[['Phasen A/B/C Duty','mR_duty'],['Phasenstrom','mR_a'],['Hall A/B/C','mR_hall'],['Drehzahl','mR_rpm']]},
  {t:'Neigungsplatine links',s:'Kabel zu USART2: PA2 (TX), PA3 (RX)',r:[['Neigung','pL_ang'],['Fußschalter','pL_foot'],['Beispiel-Telegramm','pL_frame']]},
  {t:'Neigungsplatine rechts',s:'Kabel zu USART3: PB10 (TX), PB11 (RX)',r:[['Neigung','pR_ang'],['Fußschalter','pR_foot'],['Beispiel-Telegramm','pR_frame']]},
+ {t:'Gashebel (Variante ADC)',s:'Analoge Eingänge am Sensorkabel. Belegung bitte in der Anleitung der Firmware prüfen.',r:[['Eingang 2: Gas','a_thr'],['Eingang 1: Lenkung','a_str'],['Lenker (mechanisch)','a_hb']]},
  {t:'Ausgänge',s:'LED, Summer, Überstromschutz',r:[['LED','o_led'],['Summer','o_buz'],['Stromgrenze','o_lim'],['Überstromschutz','o_fault']]},
  {t:'Programmieranschluss',s:'SWD für den ST-Link: SWDIO, SWCLK, GND, 3,3 V',r:[['Zum Flashen der echten Firmware','swd']]}
 ];
@@ -871,7 +944,8 @@ function updateConns(){
     pL_ang:fmt(hw.in.padL,1)+'°',pL_foot:hw.in.footL?'gedrückt':'frei',pL_frame:frameHex(hw.in.padL,hw.in.footL),
     pR_ang:fmt(hw.in.padR,1)+'°',pR_foot:hw.in.footR?'gedrückt':'frei',pR_frame:frameHex(hw.in.padR,hw.in.footR),
     o_led:o.led?'an':'aus',o_buz:o.buzzer?'an':'aus',o_lim:fmt(Number(o.currentLimit)||0,0)+' A',o_fault:S.faultT>0?'ausgelöst':'ok',
-    swd:'nicht verbunden'
+    swd:'nicht verbunden',
+    a_thr:Math.round(hw.in.throttle*1000)+' von 1000',a_str:Math.round(hw.in.steer*1000)+' von 1000',a_hb:fmt(steerDeg,0)+'°'
   };
   var els=document.querySelectorAll('#conns dd');
   for(var i=0;i<els.length;i++){var k=els[i].getAttribute('data-k');if(V[k]!==undefined&&els[i].textContent!==V[k])els[i].textContent=V[k]}
@@ -883,7 +957,9 @@ function updateStats(){
   var st=$('#sState');
   if(S.faultT>0){st.textContent='Überstrom';st.className='bad'}
   else if(fw.halted){st.textContent='Fehler';st.className='bad'}
+  else if(S.tip){st.textContent='Kippgefahr';st.className='warn'}
   else{st.textContent='läuft';st.className='good'}
+  $('#sSteer').textContent=fmt(steerDeg,0)+'°';
 }
 
 /* ---------- Hauptschleife ---------- */
@@ -920,7 +996,7 @@ function bind(id,out,suffix){
 }
 bind('#rThr','#oThr','');bind('#rStr','#oStr','');
 bind('#rPadL','#oPadL','°');bind('#rPadR','#oPadR','°');
-bind('#rLoad','#oLoad',' kg');bind('#rSoc','#oSoc',' %');
+bind('#rLoad','#oLoad',' kg');bind('#rHb','#oHb','°');bind('#rSoc','#oSoc',' %');
 $('#rSoc').addEventListener('input',function(){S.soc=Number($('#rSoc').value)/100});
 
 var tabs=['in','fw','io'];
@@ -943,17 +1019,18 @@ $('#btnApply').addEventListener('click',function(){applyFirmware()});
 $('#btnCfg').addEventListener('click',function(){applyFirmware()});
 $('#btnOpenFw').addEventListener('click',function(){$('#t-fw').click();$('#code').focus()});
 $('#proj').addEventListener('change',function(){openProject(this.value)});
+$('#veh').addEventListener('change',function(){applyVeh();stashCode();resetVehicle()});
 $('#btnNew').addEventListener('click',function(){
   stashCode();
   var p=PRESETS[sel.value];
   var name=uniqueName(cleanName($('#projName').value)||p.name);
-  PROJ.items[name]=mkProj(p.src,p.cfg||'');PROJ.cur=name;$('#projName').value='';
+  PROJ.items[name]=mkProj(p.src,p.cfg||'',p.veh);PROJ.cur=name;$('#projName').value='';
   showProject();fillProjSelect();saveProjects();applyFirmware();projMsg('Neues Projekt "'+name+'" angelegt.');
 });
 $('#btnCopy').addEventListener('click',function(){
   stashCode();
   var name=uniqueName(cleanName($('#projName').value)||(PROJ.cur+' Kopie'));
-  PROJ.items[name]=mkProj($('#code').value,$('#cfg').value);PROJ.cur=name;$('#projName').value='';
+  PROJ.items[name]=mkProj($('#code').value,$('#cfg').value,$('#veh').value);PROJ.cur=name;$('#projName').value='';
   fillProjSelect();saveProjects();projMsg('Kopie als "'+name+'" gespeichert.');
 });
 var delArmed=null;
